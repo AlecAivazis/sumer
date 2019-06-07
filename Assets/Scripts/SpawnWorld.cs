@@ -38,56 +38,28 @@ public class SpawnWorld : MonoBehaviour
         // grab the play boundary defined by the oculus system
         OVRBoundary boundary = OVRManager.boundary;
 
+        if (!boundary.GetConfigured())
+        {
+            throw new System.InvalidOperationException("Boundary is not configured");
+        }
+
         // grab the actual points that make up the boundary
         Vector3[] points = boundary.GetGeometry(OVRBoundary.BoundaryType.OuterBoundary);
 
-        // we have to create an oriented bounding box (OBB) instead of an axis-aligned (AABB)
+        // compute the convex hull of the points
+        Vector3[] convexHull = ConvexHull.JarvisMarch(points);
 
-        // to find the boundary, we need extreme values that will always pass the first max or min we try
-        Vector3 minX = new Vector3(Mathf.Infinity, 0, 0);
-        Vector3 minZ = new Vector3(0, 0, Mathf.Infinity);
-        Vector3 maxX = new Vector3(-Mathf.Infinity, 0, 0);
-        Vector3 maxZ = new Vector3(0, 0, -Mathf.Infinity);
-
-
-        // foreach point that makes up the boundary
-        foreach (Vector3 point in points)
+        // we now have to do the rotating callipers algorithm. Since the minimum area rectangle
+        // must be along one of the edges of the convex hull, we just need to go over every one
+        // compute the minimum area, and then find the lowest one. The mimnimum area computation
+        // can be trivially paralellized.
+        Parallel.For(0, convexHull.Length, edge =>
         {
-            // find the smallest x
-            if (point.x < minX.x)
-            {
-                minX = point;
-            }
 
-            // find the largest x
-            if (point.x > maxX.x)
-            {
-                maxX = point;
-            }
+        })
 
-            // find the smallest z
-            if (point.z < minZ.z)
-            {
-                minZ = point;
-            }
-
-            // find the largest z
-            if (point.z > maxZ.z)
-            {
-                maxZ = point;
-            }
-        }
-        // the origin of VR space
-        Transform origin = FindObjectsOfType<OVRCameraRig>()[0].trackingSpace;
-
-        // zero out the ys
-        minX.y = origin.transform.position.y;
-        minZ.y = origin.transform.position.y;
-        maxX.y = origin.transform.position.y;
-        maxZ.y = origin.transform.position.y;
-
-        // return the vectors
-        return new Vector3[] { minX, maxX, minZ, maxZ };
+        // we're done here
+        return points;
     }
 
     void createSphere(Vector3 location, Color color)
