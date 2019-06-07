@@ -17,6 +17,8 @@
 /[Mm]emoryCaptures/
 */[Mm]emoryCaptures/
 
+Sumer/bin/*
+
 # Never ignore Asset meta data
 !**/[Aa]ssets/**/*.meta
 
@@ -40,7 +42,7 @@ ExportedObj/
 .consulo/
 *.csproj
 *.unityproj
-*.sln
+SumerGameEngine/*.sln
 *.suo
 *.tmp
 *.user
