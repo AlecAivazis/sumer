@@ -51,12 +51,8 @@ public class SpawnWorld : MonoBehaviour
 
         // we now have to do the rotating callipers algorithm. Since the minimum area rectangle
         // must be along one of the edges of the convex hull, we just need to go over every one
-        // compute the minimum area, and then find the lowest one. The mimnimum area computation
-        // can be trivially paralellized.
-        Parallel.For(0, convexHull.Length, edge =>
-        {
+        // compute the minimum area, and then find the lowest one.
 
-        })
 
         // we're done here
         return points;
