@@ -10,5 +10,8 @@ task "build" {
 
 task "tests" {
     description = "Run the tests associated with this project"
-    command = "dotnet test SumerTests"
+    pipeline = [
+        "run build",
+        "dotnet test SumerTests"
+    ]
 }

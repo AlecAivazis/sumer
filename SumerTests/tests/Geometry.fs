@@ -15,7 +15,6 @@ type GeometryTests () =
 
     [<Test>]
     member this.JarvisMarch_ConvexHulls() =
-
         // a list of convex shapes
         let shapes = [
             {
@@ -29,14 +28,10 @@ type GeometryTests () =
             }
         ]
 
-        // look for the tests that don't pass
-        let failures = shapes |> List.filter (fun test ->
+        for test in shapes do
             // compute the convex hull
             let hull = ConvexHull(test.points)
 
-            // include this test case in the list if the hull is not the same as points
-            test.points != hull
-        )
+            // make sure that the reslt is the same as what we put in
+            Assert.That(hull, Is.EquivalentTo(test.points))
 
-        // make sure we didn't get any failures
-        Assert.That(failures.Length, Is.EqualTo(0))

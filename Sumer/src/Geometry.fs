@@ -3,7 +3,6 @@ module Sumer.Geometry
 // externals
 open UnityEngine
 
-let ConvexHull name =
-    printfn "Hello %s" name
+let ConvexHull name: List<Vector3> =
 
-    ()
+    name
