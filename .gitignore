@@ -17,8 +17,8 @@
 /[Mm]emoryCaptures/
 */[Mm]emoryCaptures/
 
-Sumer/bin/*
-Sumer/obj/*
+*/bin/*
+*/obj/*
 
 # Never ignore Asset meta data
 !**/[Aa]ssets/**/*.meta

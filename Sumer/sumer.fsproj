@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\Library\ScriptAssemblies\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\SumerGameEngine\Library\ScriptAssemblies\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Cecil.Mdb">
       <HintPath>..\..\..\..\..\Applications\Unity\Hub\Editor\2019.1.5f1\Unity.app\Contents\Managed\UnityEngine\Unity.Cecil.Mdb.dll</HintPath>

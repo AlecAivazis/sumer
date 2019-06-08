@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "path": "Sumer"
+    },
+    {
+      "path": "SumerTests"
+    },
+    {
+      "name": "ProjectRoot",
+      "path": "."
+    }
+  ],
+  "settings": {}
+}

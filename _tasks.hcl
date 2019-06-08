@@ -7,3 +7,8 @@ task "build" {
         "cp Sumer/obj/Debug/netstandard2.0/sumer.dll SumerGameEngine/Assets/Sumer.dll",
     ]
 }
+
+task "tests" {
+    description = "Run the tests associated with this project"
+    command = "dotnet test SumerTests"
+}
