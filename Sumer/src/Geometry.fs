@@ -3,10 +3,10 @@ module Sumer.Geometry
 // externals
 open UnityEngine
 
-type Direction = CoLinear | Clockwise | CounterClockwise
+type TurnDirection = CoLinear | Clockwise | CounterClockwise
 
-// ccw returns the direction of the turn created by the three provided points
-let ccw (a: Vector2) (b: Vector2) (c: Vector2) =
+// turnDirection returns the direction of the turn created by the three provided points
+let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
     match (b.y-a.y)*(c.x-b.x)-(b.x-a.x)*(c.y-b.y) with
     | 0.0f -> CoLinear
     | i when i < 0.0f -> CounterClockwise
@@ -28,16 +28,14 @@ let ConvexHull2D points =
         | _ -> lowest
     )
 
-    printf "lowest point: (%f, %f)\n" p0.x p0.y
-
     // we now have to sort the incoming list of points by polar angle relative to p0
     // if two points have the same polar angle, we have to only include the furthest one
 
     // to do this, we're going to use a map to track if we've seen an angle before
     // and then turn that map into a list which will order the entries by angle in ascending order
-    let mutable polarCoods = ((List.fold (fun (map: Map<float, Vector2>) (point: Vector2) ->
+    let mutable polarCoods = ((List.fold (fun (map: Map<float32, Vector2>) (point: Vector2) ->
         // compute the polar coordinate of this point with p0 and convert into degrees
-        let coords = atan2 (point.y - p0.y ) (point.x - p0.x) |> float |> (*) (180./System.Math.PI)
+        let coords = atan2 (point.y - p0.y ) (point.x - p0.x)
 
         match map.TryFind(coords) with
         // we haven't seen the coordinates before so use it
@@ -57,9 +55,6 @@ let ConvexHull2D points =
         polarCoods <- polarCoods.Tail
     | _ -> ()
 
-    // log the list of angles
-    printf "angles %A\n" polarCoods
-
     // we're going to keep a list of points that we will build up as we walk
     // around the set
     let mutable result = [p0]
@@ -68,13 +63,12 @@ let ConvexHull2D points =
     for (_, point) in polarCoods  do
         // while there are elements left and the last 3 points make a
         // counter-clockwise turn
-        while result.Length > 1 && (ccw point result.Head result.Tail.Head = CounterClockwise) do
+        while result.Length > 1 && (turnDirection point result.Head result.Tail.Head = CounterClockwise) do
             // pop the stack
             result <- result.Tail
 
         // add the point to the list
         result <- point :: result
-
 
     // for now just return the list we were given
     result
