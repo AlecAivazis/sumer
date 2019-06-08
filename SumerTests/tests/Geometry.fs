@@ -7,31 +7,53 @@ open Sumer.Geometry
 
 type TestCase = {
     name: string
-    points: List<Vector3>
+    points: List<Vector2>
+    expected: List<Vector2>
 }
 
 [<TestFixture>]
 type GeometryTests () =
 
     [<Test>]
-    member this.JarvisMarch_ConvexHulls() =
+    member this.convexHull() =
         // a list of convex shapes
-        let shapes = [
+        let table = [
             {
-                name = "Square";
+                name = "convex shape";
                 points = [
-                    Vector3(0.f, 0.f, 0.f);
-                    Vector3(0.f, 0.f, 1.f);
-                    Vector3(1.f, 0.f, 1.f);
-                    Vector3(0.f, 0.f, 1.f)
+                    Vector2(0.f, 0.f);
+                    Vector2(0.f, 1.f);
+                    Vector2(1.f, 1.f);
+                    Vector2(1.f, 0.f);
+                ];
+                // a convex shape, is its convex hull
+                expected = [
+                    Vector2(0.f, 0.f);
+                    Vector2(1.f, 0.f);
+                    Vector2(1.f, 1.f);
+                    Vector2(0.f, 1.f);
                 ]
+            };
+            {
+                name="concave shape";
+                points = [
+                    Vector2(0.f, 0.f);
+                    Vector2(1.f, 0.f);
+                    Vector2(0.5f, 0.5f);
+                    Vector2(1.f, 1.f);
+                    Vector2(0.f, 1.f);
+                ];
+                expected = [
+                    Vector2(0.f, 0.f);
+                    Vector2(1.f, 0.f);
+                    Vector2(1.f, 1.f);
+                    Vector2(0.f, 1.f);
+                ];
             }
         ]
 
-        for test in shapes do
+        for test in table do
             // compute the convex hull
-            let hull = ConvexHull(test.points)
+            let result = ConvexHull2D(test.points)
 
-            // make sure that the reslt is the same as what we put in
-            Assert.That(hull, Is.EquivalentTo(test.points))
-
+            Assert.That(result, Is.EquivalentTo(test.expected))
