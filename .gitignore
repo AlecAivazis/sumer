@@ -20,6 +20,8 @@
 */bin/*
 */obj/*
 
+Sumer.dll
+
 # Never ignore Asset meta data
 !**/[Aa]ssets/**/*.meta
 
