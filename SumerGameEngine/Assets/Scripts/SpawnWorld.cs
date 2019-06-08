@@ -15,8 +15,6 @@ public class SpawnWorld : MonoBehaviour
         // make sure the boundary is always visible
         boundary.SetVisible(true);
 
-        // we want to create a room that encompasses the user's defined boundary area
-
         // compute the 4 points that make the bounding box of the play area
         Vector3[] r = this.boundingBox();
 
