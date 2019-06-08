@@ -49,11 +49,24 @@ type GeometryTests () =
                     Vector2(1.f, 1.f);
                     Vector2(0.f, 1.f);
                 ];
-            }
+            };
+            {
+                name = "doesn't include origin twice";
+                points = [
+                    Vector2(0.f, 0.f);
+                    Vector2(1.f, 1.f);
+                    Vector2(1.f, 0.f);
+                ];
+                expected = [
+                    Vector2(0.f, 0.f);
+                    Vector2(1.f, 0.f);
+                    Vector2(1.f, 1.f);
+                ];
+            };
         ]
 
         for test in table do
             // compute the convex hull
             let result = ConvexHull2D(test.points)
 
-            Assert.That(result, Is.EquivalentTo(test.expected))
+            Assert.That(result, Is.EquivalentTo(test.expected), test.name)

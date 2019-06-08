@@ -3,6 +3,15 @@ module Sumer.Geometry
 // externals
 open UnityEngine
 
+type Direction = CoLinear | Clockwise | CounterClockwise
+
+// ccw returns the direction of the turn created by the three provided points
+let ccw (a: Vector2) (b: Vector2) (c: Vector2) =
+    match (b.y-a.y)*(c.x-b.x)-(b.x-a.x)*(c.y-b.y) with
+    | 0.0f -> CoLinear
+    | i when i < 0.0f -> CounterClockwise
+    | _ -> Clockwise
+
 // given a list of points, compute the convex hull, ignoring the y-axis.
 let ConvexHull2D points =
     // we're going to compute the convex hull using the Graham Scan method
@@ -26,7 +35,7 @@ let ConvexHull2D points =
 
     // to do this, we're going to use a map to track if we've seen an angle before
     // and then turn that map into a list which will order the entries by angle in ascending order
-    let polarCoods = (List.fold (fun (map: Map<float, Vector2>) (point: Vector2) ->
+    let mutable polarCoods = ((List.fold (fun (map: Map<float, Vector2>) (point: Vector2) ->
         // compute the polar coordinate of this point with p0 and convert into degrees
         let coords = atan2 (point.y - p0.y ) (point.x - p0.x) |> float |> (*) (180./System.Math.PI)
 
@@ -40,14 +49,32 @@ let ConvexHull2D points =
         // anything else we keep life as it is...
         | _ -> map
     // turn the map into a list which will sort it in ascending order by key
-    ) Map.empty points) |> Map.toList
+    ) Map.empty points) |> Map.toList)
+
+    // if the first entry is the origin, remove it
+    match polarCoods.Head with
+    | (_, p) when p = p0 ->
+        polarCoods <- polarCoods.Tail
+    | _ -> ()
 
     // log the list of angles
     printf "angles %A\n" polarCoods
 
     // we're going to keep a list of points that we will build up as we walk
-    // around the set. This structure must have stack semantics
-    let result = []
+    // around the set
+    let mutable result = [p0]
+
+    // visit each point
+    for (_, point) in polarCoods  do
+        // while there are elements left and the last 3 points make a
+        // counter-clockwise turn
+        while result.Length > 1 && (ccw point result.Head result.Tail.Head = CounterClockwise) do
+            // pop the stack
+            result <- result.Tail
+
+        // add the point to the list
+        result <- point :: result
+
 
     // for now just return the list we were given
     result
