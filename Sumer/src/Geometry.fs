@@ -68,7 +68,7 @@ let ConvexHull2D points =
             result <- result.Tail
 
         // add the point to the list
-        result <- point :: result
+        result <- point::result
 
-    // for now just return the list we were given
+    // we're done
     result
