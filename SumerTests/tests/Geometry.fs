@@ -92,7 +92,7 @@ type GeometryTests () =
                     supports = {
                         top = Vector2.up
                         left = Vector2.zero
-                        right = Vector2.zero
+                        right = Vector2(1.f, 1.f)
                         bottom = Vector2.right
                     }
                     basisVectors = (Vector2.right, Vector2.up)
