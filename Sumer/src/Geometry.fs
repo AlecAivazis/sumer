@@ -32,11 +32,10 @@ let ConvexHull2D points =
     // we now have to sort the incoming list of points by polar angle relative to p0
     // if two points have the same polar angle, we have to only include the furthest one
 
-    // to do this, we're going to use a map to track if we've seen an angle before
-    // and then turn that map into a list which will order the entries by angle in ascending order
     let mutable polarCoods =
         points
-        |>  List.fold (fun (map: Map<float32, Vector2>) (point: Vector2) ->
+        // create a map of from polar coordinate to position
+        |> List.fold (fun (map: Map<float32, Vector2>) (point: Vector2) ->
                 // compute the polar coordinate of this point with p0 and convert into degrees
                 let coords = atan2 (point.y - p0.y ) (point.x - p0.x)
 
@@ -49,8 +48,8 @@ let ConvexHull2D points =
                     map.Add(coords, point)
                 // anything else we keep life as it is...
                 | _ -> map
-            // turn the map into a list which will sort it in ascending order by key
             ) Map.empty
+        // turn the map into a list which will sort it in ascending order by key
         |> Map.toList
 
     // if the first entry is the origin, remove it
@@ -59,8 +58,7 @@ let ConvexHull2D points =
         polarCoods <- polarCoods.Tail
     | _ -> ()
 
-    // we're going to keep a list of points that we will build up as we walk
-    // around the set
+    // start the list of points with our initial one
     let mutable result = [p0]
 
     // visit each point
@@ -76,3 +74,13 @@ let ConvexHull2D points =
 
     // we're done
     result
+
+// compute the oriented bounding box of a set of points in two dimensions
+let OrientedBoundingBox2D points =
+    // the first step is to compute the convex hull of the points
+    let hull = ConvexHull2D(points)
+
+    // our test only verifies convex shapes so :P
+    hull
+
+

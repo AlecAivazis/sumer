@@ -71,4 +71,59 @@ type GeometryTests () =
 
     [<Test>]
     member this.OrientedBoundingBox() =
-        ()
+        let table = [
+            {
+                name = "convex shape"
+                points = [
+                    Vector2(0.f, 0.f)
+                    Vector2(1.f, 0.f)
+                    Vector2(1.f, 1.f)
+                    Vector2(0.f, 1.f)
+                ]
+                expected = [
+                    Vector2(0.f, 0.f)
+                    Vector2(1.f, 0.f)
+                    Vector2(1.f, 1.f)
+                    Vector2(0.f, 1.f)
+                ]
+            }
+            {
+                name = "rotated shape"
+                points = [
+                    Vector2(0.f, 1.f)
+                    Vector2(1.f, 2.f)
+                    Vector2(3.f, 1.f)
+                    Vector2(1.f, 0.f)
+                ]
+                expected = [
+                    Vector2(0.f, 1.f)
+                    Vector2(1.f, 2.f)
+                    Vector2(3.f, 1.f)
+                    Vector2(1.f, 0.f)
+                ]
+            }
+            {
+                name = "concave shape"
+                points = [
+                    Vector2(0.f, 0.f)
+                    Vector2(0.f, 2.f)
+                    Vector2(1.f, 2.f)
+                    Vector2(1.f, 1.f)
+                    Vector2(3.f, 1.f)
+                    Vector2(3.f, 2.f)
+                    Vector2(4.f, 2.f)
+                    Vector2(4.f, 0.f)
+                ]
+                expected = [
+                    Vector2(0.f, 0.f)
+                    Vector2(0.f, 2.f)
+                    Vector2(4.f, 2.f)
+                    Vector2(4.f, 0.f)
+                ]
+            }
+        ]
+
+        for test in table do
+            // compute the convex hull
+            Assert.That(OrientedBoundingBox2D(test.points), Is.EquivalentTo(test.expected), test.name)
+
