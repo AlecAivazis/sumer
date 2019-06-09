@@ -10,5 +10,8 @@
       "name": "ProjectRoot",
       "path": "."
     }
-  ]
+  ],
+  "settings": {
+    "FSharp.fsacRuntime": "netcore"
+  }
 }

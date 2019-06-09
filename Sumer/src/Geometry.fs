@@ -3,12 +3,13 @@ module Sumer.Geometry
 // externals
 open UnityEngine
 
-// an enum to indicate turn directionality (cross-product direction)
+/// An enum to indicate turn directionality (cross-product direction)
 type TurnDirection = CoLinear | Clockwise | CounterClockwise
 
-// a single case union so users have to flag a list is actually built as a convex hull
+/// A wrapper over List<Vector2> to flag list as a convex hull in standard form
 type ConvexHull2D = ConvexHull of List<Vector2>
 
+/// A wrapper over Vector2 * Vector2 interacting with hulls
 type Edge = Edge of Vector2 * Vector2
 
 // turnDirection returns the direction of the turn created by the three provided points
@@ -18,7 +19,7 @@ let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
     | i when i < 0.0f -> CounterClockwise
     | _ -> Clockwise
 
-// given a list of points, compute the convex hull, ignoring the y-axis.
+/// Compute the convex hull of an unordered list of points.
 let ConvexHull2D (points: List<Vector2>) =
     // we're going to compute the convex hull using the Graham Scan method
     // as described here: https://en.wikipedia.org/wiki/Graham_scan#Pseudocode
@@ -178,7 +179,7 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
         area = (supportsLocal.right.x - supportsLocal.left.x) * supportsLocal.top.y
     }
 
-// compute the oriented bounding box of a set of points in two dimensions
+/// Compute the oriented bounding box of a set of points in two dimensions.
 let OrientedBoundingBox points =
     // grab the list of points that make the convex hull of what we were given
     match points |> ConvexHull2D with
