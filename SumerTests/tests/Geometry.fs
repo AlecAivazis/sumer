@@ -73,30 +73,9 @@ type GeometryTests () =
 
         for test in table do
             // compute the convex hull
-            Assert.That(ConvexHull2D(test.points), Is.EquivalentTo(test.expected), test.name)
-
-    [<Test>]
-    member this.AntiPodalPairs() =
-        let table: List<AntiPodalTestCase> = [
-            {
-                name = "square"
-                points = [
-                    Vector2(0.f, 0.f)
-                    Vector2(1.f, 0.f)
-                    Vector2(1.f, 1.f)
-                    Vector2(0.f, 1.f)
-                ]
-                expected = [
-                    (Vector2(0.f, 0.f), Vector2(1.f, 1.f))
-                    (Vector2(0.f, 1.f), Vector2(1.f, 0.f))
-                ]
-            }
-        ]
-
-        for test in table do
-            // compute the convex hull
-            Assert.That(AntiPodalPairs(ConvexHull test.points), Is.EquivalentTo(test.expected), test.name)
-
+            match ConvexHull2D(test.points) with
+            | ConvexHull points ->
+                Assert.That(points, Is.EquivalentTo(test.expected), test.name)
 
     [<Test>]
     member this.OrientedBoundingBox() =
@@ -154,5 +133,5 @@ type GeometryTests () =
 
         for test in table do
             // compute the convex hull
-            Assert.That(OrientedBoundingBox2D(test.points), Is.EquivalentTo(test.expected), test.name)
+            Assert.That(MinAreaBox2D(test.points), Is.EquivalentTo(test.expected), test.name)
 

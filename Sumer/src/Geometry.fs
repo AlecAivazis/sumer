@@ -2,12 +2,14 @@ module Sumer.Geometry
 
 // externals
 open UnityEngine
+open System.Drawing
 
 // an enum to indicate turn directionality (cross-product direction)
 type TurnDirection = CoLinear | Clockwise | CounterClockwise
 
-// a single case union so users have to flag its a convex hull
+// a single case union so users have to flag a list is actually built as a convex hull
 type ConvexHull2D = ConvexHull of List<Vector2>
+
 
 // turnDirection returns the direction of the turn created by the three provided points
 let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
@@ -17,7 +19,7 @@ let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
     | _ -> Clockwise
 
 // given a list of points, compute the convex hull, ignoring the y-axis.
-let ConvexHull2D (points: List<Vector2>) =
+let ConvexHull2D points =
     // we're going to compute the convex hull using the Graham Scan method
     // as described here: https://en.wikipedia.org/wiki/Graham_scan#Pseudocode
 
@@ -82,23 +84,33 @@ let ConvexHull2D (points: List<Vector2>) =
     // we're done
     result
 
-// compute the list of pairs of points that are opposite each other
-// in the convex hull
-let AntiPodalPairs (ConvexHull hull: ConvexHull2D) =
 
-    [
-        (Vector2(0.f, 0.f), Vector2(0.f, 0.f))
-    ]
+// a rectangle used in tracking and computing bounding boxes
+type Rectangle =
+    struct
+        val mutable area: float
+        val mutable basisVectors: Vector2 * Vector2
+        val mutable supportingIndices: int * int * int * int
+    end
+
+let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vector2>): Rectangle =
+    // compute the basis vectors
+    let u1 = p2 - p1
+    u1.Normalize()
+    let u2 = Vector2.Perpendicular(u1)
+
+
+
+    ()
+
 
 // compute the oriented bounding box of a set of points in two dimensions
-let OrientedBoundingBox2D points = (
-    points
-    // the first step is to compute the convex hull of the points
-    |> ConvexHull2D
-    // the smallest oriented bounding box must be along one of the vertices
-    // in the convex hull.
-    |> AntiPodalPairs
-    // rotate the hull so that each vertex is vertical and compute the minimum area in that space
+let MinAreaBox2D points = (
+    // compute the convex hull of the points
+    let (ConvexHull hull) = points |> ConvexHull2D
+
+    // we're going to start at the last edge in the hull to avoid mod logic
+    hull
 )
 
 
