@@ -84,12 +84,19 @@ let ConvexHull2D points =
     result
 
 
+type RectangleVertices = {
+    bottom: Vector2
+    left: Vector2
+    right: Vector2
+    top: Vector2
+}
 // a rectangle used in tracking and computing bounding boxes
 type Rectangle = {
-    area: float
+    area: float32
     basisVectors: Vector2 * Vector2
-    supportingIndices: int * int * int * int
+    supports: RectangleVertices
 }
+
 
 let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vector2>): Rectangle =
     // compute the basis vectors in the space aligned with our two vectors
@@ -97,23 +104,54 @@ let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vect
     u1.Normalize()
     let u2 = u1 |> Vector2.Perpendicular
 
-    // the 4 supporting vertices for the rectangle coincident with our points
-    val bottomVertex Vector2
-    val leftVertex Vector2
-    val rightVertex Vector2
-    val bottomVertex Vector2
+    let support = (
+        points 
+        |> List.fold (fun (prev: RectangleVertices) (point: Vector2) ->
+            // convert the point to a coordinate system with the origin at p2
+            // and basis vectors (u1, u2)
+            let diff = point - p2
+            let localSpace = Vector2(Vector2.Dot(u1, diff), Vector2.Dot(u2, diff))
 
-    // find the minimum rectangle
-    for point in points do 
-        // convert the point to a coordinate system with the origin at p2
-        // and basis vectors (u1, u2)
-        let diff = point - p2
-        let localSpace = Vector2(Vector2.Dot(u1, diff), Vector2.Dot(u2, diff))
+            // the vertex record we might change
+            let mutable supports = prev
 
-        // 
+            // new right maximum OR same right but more top
+            if localSpace.x > supports.right.x 
+                || localSpace.x = supports.right.x && localSpace.y > supports.right.y  then
+                // update the right support to be this points
+                supports <- { supports with right = point }     
+            
+            // new top maximum OR same top but more left
+            if localSpace.y > supports.top.y 
+                || localSpace.y = supports.top.y && localSpace.x < supports.top.x  then
+                // update the top support to be this points
+                supports <- { supports with top = point }  
 
-    
-    ()
+            // new left maximum OR same left but more bottom
+            if localSpace.x < supports.left.x 
+                || localSpace.x = supports.left.x && localSpace.y < supports.left.y then
+                // update the left support to be this points
+                supports <- { supports with left = point }  
+            
+            // return the new supports taking this point into account
+            supports
+
+        ) {
+            top = p2
+            left = p2
+            right = p2
+            bottom = p2
+        }
+    )
+
+    // return the rectangle we just computed
+    {
+        supports = support 
+        basisVectors = (u1, u2)
+        // since the bottom edge is always along the bottom, the height of the rectangle is the 
+        // height of the top support
+        area = (support.right.x - support.left.x) * support.top.y
+    }
 
 
 // compute the oriented bounding box of a set of points in two dimensions
