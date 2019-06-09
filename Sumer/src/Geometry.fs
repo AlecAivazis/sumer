@@ -110,7 +110,7 @@ let private align (u1: Vector2) (u2: Vector2) (origin: Vector2) (point: Vector2)
         origin.y + Vector2.Dot(location, Vector2.up)
     )
 
-let private minRectCoincidentWith (Edge (p1, p2)) (points: List<Vector2>): Rectangle =
+let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectangle =
     // compute the basis vectors in the space aligned with our two vectors
     let u1 = p2 - p1
     u1.Normalize()
@@ -190,8 +190,8 @@ let OrientedBoundingBox points =
             // since we are going counter-clockwise, if we are at the end, next is the start
             let nextPoint = if i = hull.Length-1 then points.[0] else points.[i + 1]
 
-            // compute the bounding box oriented along the edge
-            minRectCoincidentWith (Edge (point, nextPoint)) points
+            // compute the bounding box for the points oriented along the edge
+            boundingBoxAlongEdge points (Edge (point, nextPoint))
         )
         // find the rectangle with the smallest area
         |> List.minBy (fun { area = area } ->  area)
