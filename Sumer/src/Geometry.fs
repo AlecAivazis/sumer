@@ -9,6 +9,7 @@ type TurnDirection = CoLinear | Clockwise | CounterClockwise
 // a single case union so users have to flag a list is actually built as a convex hull
 type ConvexHull2D = ConvexHull of List<Vector2>
 
+type Edge = Edge of Vector2 * Vector2
 
 // turnDirection returns the direction of the turn created by the three provided points
 let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
@@ -18,7 +19,7 @@ let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
     | _ -> Clockwise
 
 // given a list of points, compute the convex hull, ignoring the y-axis.
-let ConvexHull2D points =
+let ConvexHull2D (points: List<Vector2>) =
     // we're going to compute the convex hull using the Graham Scan method
     // as described here: https://en.wikipedia.org/wiki/Graham_scan#Pseudocode
 
@@ -33,6 +34,8 @@ let ConvexHull2D points =
                 // otherwise the lowest still considered lower
                 | _ -> lowest
             )
+
+    printf "p0: %A\n" p0
 
     // we now have to sort the incoming list of points by polar angle relative to p0
     // if two points have the same polar angle, we have to only include the furthest one
@@ -90,21 +93,33 @@ type RectangleVertices = {
     right: Vector2
     top: Vector2
 }
+
 // a rectangle used in tracking and computing bounding boxes
 type Rectangle = {
-    area: float32
     basisVectors: Vector2 * Vector2
     supports: RectangleVertices
+    area: float32
 }
 
-
-let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vector2>): Rectangle =
+// take a point in the coordinate system defined by u1,u2 at origin and transform it to standard
+let private align (u1: Vector2) (u2: Vector2) (origin: Vector2) (point: Vector2) : Vector2 = 
+    Vector2 (
+        // both coordinates in local space can contribute to a single coordinate in standard space
+        origin.x + Vector2.Dot(point.x * u1, Vector2.right) + Vector2.Dot(point.y * u2, Vector2.right),
+        origin.y + Vector2.Dot(point.y * u2, Vector2.up) + Vector2.Dot(point.y * u2, Vector2.up)
+    )
+   
+let private minRectCoincidentWith (Edge (p1, p2)) (points: List<Vector2>): Rectangle =
     // compute the basis vectors in the space aligned with our two vectors
     let u1 = p2 - p1
     u1.Normalize()
     let u2 = u1 |> Vector2.Perpendicular
 
-    let support = (
+    printf "%A\n" (p1, p2)
+
+    // calculate the supports for the rectangle coincident with the two points in the local
+    // coordinate system
+    let supportsLocal = (
         points 
         |> List.fold (fun (prev: RectangleVertices) (point: Vector2) ->
             // convert the point to a coordinate system with the origin at p2
@@ -114,24 +129,27 @@ let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vect
 
             // the vertex record we might change
             let mutable supports = prev
+            
+            // since we are garunteed that none of vertices are colinear, p2 must be the 
+            // lowest, right most point and therefor is already our bottom support
 
             // new right maximum OR same right but more top
             if localSpace.x > supports.right.x 
                 || localSpace.x = supports.right.x && localSpace.y > supports.right.y  then
                 // update the right support to be this points
-                supports <- { supports with right = point }     
+                supports <- { supports with right = localSpace }     
             
             // new top maximum OR same top but more left
             if localSpace.y > supports.top.y 
                 || localSpace.y = supports.top.y && localSpace.x < supports.top.x  then
                 // update the top support to be this points
-                supports <- { supports with top = point }  
+                supports <- { supports with top = localSpace }  
 
             // new left maximum OR same left but more bottom
             if localSpace.x < supports.left.x 
                 || localSpace.x = supports.left.x && localSpace.y < supports.left.y then
                 // update the left support to be this points
-                supports <- { supports with left = point }  
+                supports <- { supports with left = localSpace }  
             
             // return the new supports taking this point into account
             supports
@@ -143,27 +161,41 @@ let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vect
             bottom = p2
         }
     )
+    
+    // partially binding the coodinate system
+    let localAlign = align u1 u2 p2
 
     // return the rectangle we just computed
     {
-        supports = support 
+        supports = {
+            top = localAlign supportsLocal.top
+            bottom = localAlign supportsLocal.bottom
+            left = localAlign supportsLocal.left
+            right = localAlign supportsLocal.right
+        }
         basisVectors = (u1, u2)
-        // since the bottom edge is always along the bottom, the height of the rectangle is the 
-        // height of the top support
-        area = (support.right.x - support.left.x) * support.top.y
-    }
-
+        // since supports are in the local coordinate anchored along the bottom line, 
+        // system support.bottom.y = 0. Therefore the height is just the height of the top support
+        area = (supportsLocal.right.x - supportsLocal.left.x) * supportsLocal.top.y
+    } 
 
 // compute the oriented bounding box of a set of points in two dimensions
-let MinAreaBox2D points = (
-    // compute the convex hull of the points
-    let (ConvexHull hull) = points |> ConvexHull2D
+let OrientedBoundingBox points =
+    printf "%A\n" points 
+    match points |> ConvexHull2D with 
+    | ConvexHull hull -> 
+        printf "%A\n" hull
 
-    // we're going to start at the last edge in the hull to avoid mod logic
-    hull
-)
+        hull
+        // take the list of points that make up the convex hull, string them together with 
+        // a point that is to the counter-clockwise direction (the same as what's implied by ConvexHull type) 
+        // and compute the minimum rectangle that is incident with the resulting edge
+        |> List.mapi (fun i point -> 
+            // since we are going counter-clockwise, if we are at the end, next is the start
+            let nextPoint = if i = hull.Length-1 then points.[0] else points.[i + 1]
 
-
-
-
-
+            // compute the bounding box oriented along the edge 
+            minRectCoincidentWith (Edge (point, nextPoint)) points
+        )
+        // find the rectangle with the smallest area
+        |> List.minBy (fun { area = area } ->  area)
