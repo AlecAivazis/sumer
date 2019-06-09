@@ -86,21 +86,34 @@ let ConvexHull2D points =
 
 
 // a rectangle used in tracking and computing bounding boxes
-type Rectangle =
-    struct
-        val mutable area: float
-        val mutable basisVectors: Vector2 * Vector2
-        val mutable supportingIndices: int * int * int * int
-    end
+type Rectangle = {
+    area: float
+    basisVectors: Vector2 * Vector2
+    supportingIndices: int * int * int * int
+}
 
 let private rectangleCoincidentWith (p1:Vector2) (p2:Vector2) (points: List<Vector2>): Rectangle =
-    // compute the basis vectors
+    // compute the basis vectors in the space aligned with our two vectors
     let u1 = p2 - p1
     u1.Normalize()
-    let u2 = Vector2.Perpendicular(u1)
+    let u2 = u1 |> Vector2.Perpendicular
 
+    // the 4 supporting vertices for the rectangle coincident with our points
+    val bottomVertex Vector2
+    val leftVertex Vector2
+    val rightVertex Vector2
+    val bottomVertex Vector2
 
+    // find the minimum rectangle
+    for point in points do 
+        // convert the point to a coordinate system with the origin at p2
+        // and basis vectors (u1, u2)
+        let diff = point - p2
+        let localSpace = Vector2(Vector2.Dot(u1, diff), Vector2.Dot(u2, diff))
 
+        // 
+
+    
     ()
 
 
