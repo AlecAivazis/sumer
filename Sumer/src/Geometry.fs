@@ -3,7 +3,11 @@ module Sumer.Geometry
 // externals
 open UnityEngine
 
+// an enum to indicate turn directionality (cross-product direction)
 type TurnDirection = CoLinear | Clockwise | CounterClockwise
+
+// a single case union so users have to flag its a convex hull
+type ConvexHull2D = ConvexHull of List<Vector2>
 
 // turnDirection returns the direction of the turn created by the three provided points
 let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
@@ -13,7 +17,7 @@ let private turnDirection (a: Vector2) (b: Vector2) (c: Vector2) =
     | _ -> Clockwise
 
 // given a list of points, compute the convex hull, ignoring the y-axis.
-let ConvexHull2D points =
+let ConvexHull2D (points: List<Vector2>) =
     // we're going to compute the convex hull using the Graham Scan method
     // as described here: https://en.wikipedia.org/wiki/Graham_scan#Pseudocode
 
@@ -59,28 +63,45 @@ let ConvexHull2D points =
     | _ -> ()
 
     // start the list of points with our initial one
-    let mutable result = [p0]
+    let mutable result = ConvexHull [p0]
 
     // visit each point
     for (_, point) in polarCoods  do
-        // while there are elements left and the last 3 points make a
-        // counter-clockwise turn
-        while result.Length > 1 && (turnDirection point result.Head result.Tail.Head = CounterClockwise) do
-            // pop the stack
-            result <- result.Tail
+        // pull the contents out of the convex hull
+        match result with
+        | ConvexHull res ->
+            // while there are elements left and the last 3 points make a
+            // counter-clockwise turn
+            while res.Length > 1 && (turnDirection point res.Head res.Tail.Head = CounterClockwise) do
+                // pop the stack
+                result <- ConvexHull res.Tail
 
-        // add the point to the list
-        result <- point::result
+            // add the point to the list
+            result <- ConvexHull (point::res)
 
     // we're done
     result
 
-// compute the oriented bounding box of a set of points in two dimensions
-let OrientedBoundingBox2D points =
-    // the first step is to compute the convex hull of the points
-    let hull = ConvexHull2D(points)
+// compute the list of pairs of points that are opposite each other
+// in the convex hull
+let AntiPodalPairs (ConvexHull hull: ConvexHull2D) =
 
-    // our test only verifies convex shapes so :P
-    hull
+    [
+        (Vector2(0.f, 0.f), Vector2(0.f, 0.f))
+    ]
+
+// compute the oriented bounding box of a set of points in two dimensions
+let OrientedBoundingBox2D points = (
+    points
+    // the first step is to compute the convex hull of the points
+    |> ConvexHull2D
+    // the smallest oriented bounding box must be along one of the vertices
+    // in the convex hull.
+    |> AntiPodalPairs
+    // rotate the hull so that each vertex is vertical and compute the minimum area in that space
+)
+
+
+
 
 
