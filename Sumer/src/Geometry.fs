@@ -2,7 +2,6 @@ module Sumer.Geometry
 
 // externals
 open UnityEngine
-open System.Drawing
 
 // an enum to indicate turn directionality (cross-product direction)
 type TurnDirection = CoLinear | Clockwise | CounterClockwise
