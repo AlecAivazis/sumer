@@ -116,8 +116,6 @@ let private minRectCoincidentWith (Edge (p1, p2)) (points: List<Vector2>): Recta
     u1.Normalize()
     let u2 = u1 |> Vector2.Perpendicular
 
-    printf "▭  for %A -> %A \n" p1 p2
-
     // calculate the supports for the rectangle coincident with the two points in the local
     // coordinate system
     let supportsLocal = (
@@ -163,12 +161,8 @@ let private minRectCoincidentWith (Edge (p1, p2)) (points: List<Vector2>): Recta
         }
     )
 
-    printf "supports - \n%A\n" supportsLocal
-
     // partially binding the coodinate system
     let localAlign = align u1 u2 p2
-
-    printf "\n"
 
     // return the rectangle we just computed
     {
