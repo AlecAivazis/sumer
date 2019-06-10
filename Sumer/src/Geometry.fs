@@ -70,17 +70,14 @@ let ConvexHull2D (points: List<Vector2>) =
 
     // visit each point
     for (_, point) in polarCoods  do
-        // pull the contents out of the convex hull
-        match result with
-        | res ->
-            // while there are elements left and the last 3 points make a
-            // counter-clockwise turn
-            while res.Length > 1 && (turnDirection point res.Head res.Tail.Head = CounterClockwise) do
-                // pop the stack
-                result <- res.Tail
+        // while there are elements left and the last 3 points make a
+        // counter-clockwise turn
+        while result.Length > 1 && (turnDirection point result.Head result.Tail.Head = CounterClockwise) do
+            // pop the stack
+            result <- result.Tail
 
-            // add the point to the list
-            result <- point::res
+        // add the point to the list
+        result <- point::result
 
     // we're done
     ConvexHull (result |> List.rev)
@@ -99,6 +96,12 @@ type Rectangle = {
     supports: RectangleVertices
     area: float32
 }
+
+let Rotate2D (angle: float32) (vec: Vector2) : Vector2 =
+    Vector2(
+        (vec.x * Mathf.Cos angle) - (vec.y * Mathf.Sin angle),
+        (vec.x * Mathf.Sin angle) + (vec.y * Mathf.Cos angle)
+    )
 
 // take a point in the coordinate system defined by u1,u2 at origin and transform it to standard
 let private align (u1: Vector2) (u2: Vector2) (origin: Vector2) (point: Vector2) : Vector2 =
