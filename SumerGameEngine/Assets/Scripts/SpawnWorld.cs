@@ -22,9 +22,11 @@ public class SpawnWorld : MonoBehaviour
         List<Vector3> r = this.boundingBox();
 
         // create the ground plane
+
+        // grab the origin of VR space
         Vector3 boxDims = boundary.GetDimensions(OVRBoundary.BoundaryType.OuterBoundary);
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        ground.transform.position = Vector3.zero; // make sure the plan is in line with the ground
+        ground.transform.position = FindObjectsOfType<OVRCameraRig>()[0].trackingSpace.transform.position; // make sure the plan is in line with the ground
 
         // some spheres for good measure
         createSphere(r[0] + new Vector3(0, 1, 0), Color.red);
@@ -37,6 +39,8 @@ public class SpawnWorld : MonoBehaviour
     {
         // grab the play boundary defined by the oculus system
         OVRBoundary boundary = OVRManager.boundary;
+        // the origin of VR space
+        Transform origin = FindObjectsOfType<OVRCameraRig>()[0].trackingSpace;
 
         if (!boundary.GetConfigured())
         {
@@ -46,12 +50,8 @@ public class SpawnWorld : MonoBehaviour
         // grab the actual points that make up the boundary
         Vector3[] points = boundary.GetGeometry(OVRBoundary.BoundaryType.OuterBoundary);
 
-        // we have to make a list of 2d points (ignoring the y-axis)
-        List<Vector2> planePoints = points.Select(point => new Vector2(point.x, point.z)).ToList();
-
-        // Since the minimum area rectangle must be along one of the edges of the convex hull,
-        // we need to go over every one compute the minimum area, and then find the smallest result.
-        Rectangle box = OrientedBoundingBox2D(planePoints);
+        // compute the bounding box that is oriented with the shape (not axis-aligned)
+        Rectangle box = OrientedBoundingBox2D(points.Select(point => new Vector2(point.x, point.z)));
 
         // convert the 4 points that define the extent of the boudning box
         return (new List<Vector2>{
@@ -60,7 +60,7 @@ public class SpawnWorld : MonoBehaviour
             box.supports.left,
             box.supports.right
         // back into 3D vectors
-        }).Select(point => new Vector3(point.x, points[0].y, point.y)).ToList();
+        }).Select(point => new Vector3(point.x, origin.transform.position.y, point.y)).ToList();
     }
 
     void createSphere(Vector3 location, Color color)
