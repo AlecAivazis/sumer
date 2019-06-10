@@ -169,8 +169,6 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
         }
     )
 
-    printf "local supports %A \n" supportsLocal
-
     // partially binding the coodinate system
     let localAlign = align u1 u2 p2
 
@@ -201,8 +199,6 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
         }
     )
     
-    printf "area %A \n\n" (Mathf.Abs(supportsLocal.right.x - supportsLocal.left.x) * supportsLocal.top.y)
-
     // return the rectangle we just computed
     {
         // regardless of the coordinate system, these 4 points are the supports. 
@@ -225,8 +221,6 @@ let OrientedBoundingBox points =
         |> List.mapi (fun i point ->
             // since we are going counter-clockwise, if we are at the end, next is the start
             let nextPoint = if i = hull.Length-1 then hull.[0] else hull.[i + 1]
-
-            printf "rectangle on edge %A -> %A \n" point nextPoint
 
             // compute the bounding box for the points oriented along the edge
             boundingBoxAlongEdge points (Edge (point, nextPoint))
