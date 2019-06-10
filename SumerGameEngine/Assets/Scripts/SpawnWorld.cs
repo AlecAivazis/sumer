@@ -44,8 +44,6 @@ public class SpawnWorld : MonoBehaviour
         // grab the actual points that make up the boundary
         Vector3[] points = boundary.GetGeometry(OVRBoundary.BoundaryType.OuterBoundary);
 
-        // compute the convex hull of the points
-        Vector3[] convexHull = Sumer.Geometry.ConvexHull(points);
 
         // Since the minimum area rectangle must be along one of the edges of the convex hull,
         // we need to go over every one compute the minimum area, and then find the smallest result.
