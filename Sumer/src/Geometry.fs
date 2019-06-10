@@ -114,6 +114,34 @@ let private align (u1: Vector2) (u2: Vector2) (origin: Vector2) (point: Vector2)
         origin.y + Vector2.Dot(location, Vector2.up)
     )
 
+let stretchRectangleBounds (prev: RectangleVertices) (p: Vector2) = 
+    // the vertex record we might change
+    let mutable supports = prev
+
+    // since we are garunteed that none of vertices are colinear, p2 must be the
+    // lowest, right most point and therefor is already our bottom support
+
+    // new right maximum OR same right but more top
+    if p.x > supports.right.x
+        || p.x = supports.right.x && p.y > supports.right.y  then
+        // update the right support to be this points
+        supports <- { supports with right = p }
+
+    // new top maximum OR same top but more left
+    if p.y > supports.top.y
+        || p.y = supports.top.y && p.x < supports.top.x  then
+        // update the top support to be this points
+        supports <- { supports with top = p }
+
+    // new left maximum OR same left but more bottom
+    if p.x < supports.left.x
+        || p.x = supports.left.x && p.y < supports.left.y then
+        // update the left support to be this points
+        supports <- { supports with left = p }
+
+    // return the new supports taking this point into account
+    supports
+    
 let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectangle =
     // compute the basis vectors in the space aligned with our two vectors
     let u1 = p2 - p1
@@ -130,52 +158,56 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
             let diff = point - p2
             let localSpace = Vector2(Vector2.Dot(u1, diff), Vector2.Dot(u2, diff))
 
-            // the vertex record we might change
-            let mutable supports = prev
-
-            // since we are garunteed that none of vertices are colinear, p2 must be the
-            // lowest, right most point and therefor is already our bottom support
-
-            // new right maximum OR same right but more top
-            if localSpace.x > supports.right.x
-                || localSpace.x = supports.right.x && localSpace.y > supports.right.y  then
-                // update the right support to be this points
-                supports <- { supports with right = localSpace }
-
-            // new top maximum OR same top but more left
-            if localSpace.y > supports.top.y
-                || localSpace.y = supports.top.y && localSpace.x < supports.top.x  then
-                // update the top support to be this points
-                supports <- { supports with top = localSpace }
-
-            // new left maximum OR same left but more bottom
-            if localSpace.x < supports.left.x
-                || localSpace.x = supports.left.x && localSpace.y < supports.left.y then
-                // update the left support to be this points
-                supports <- { supports with left = localSpace }
-
-            // return the new supports taking this point into account
-            supports
-
+            // stretch the bounds to accomodate this vertex if necessary
+            stretchRectangleBounds prev localSpace
         ) {
-            top = Vector2(0.f, 0.f)
-            left = Vector2(0.f, 0.f)
-            right = Vector2(0.f, 0.f)
-            bottom = Vector2(0.f, 0.f)
+            // because these are local coordinates relative to p2, the bottom anchor is always zero
+            top = Vector2.zero
+            left = Vector2.zero
+            right = Vector2.zero
+            bottom = Vector2.zero
         }
     )
+
+    printf "local supports %A \n" supportsLocal
 
     // partially binding the coodinate system
     let localAlign = align u1 u2 p2
 
+    // the support coordinates we want to save should be oriented in global space 
+    let supports = (
+        [ 
+            localAlign supportsLocal.top 
+            localAlign supportsLocal.bottom 
+            localAlign supportsLocal.left 
+            localAlign supportsLocal.right 
+        ] |> List.fold  (fun (prev: RectangleVertices) (point: Vector2) ->
+            // stretch the bounds to accomodate this vertex if necessary
+            let mutable next = stretchRectangleBounds prev point
+
+            // new bottom maximum OR same left but more bottom
+            if point.y < next.bottom.y
+                || point.y = next.bottom.y && point.y < next.bottom.y then
+                // update the bottom support to be this points
+                next <- { next with bottom = point }
+
+            // keep going
+            next
+        ) {
+            top = p2
+            left = p2
+            right = p2
+            bottom = p2
+        }
+    )
+    
+    printf "area %A \n\n" (Mathf.Abs(supportsLocal.right.x - supportsLocal.left.x) * supportsLocal.top.y)
+
     // return the rectangle we just computed
     {
-        supports = {
-            top = localAlign supportsLocal.top
-            bottom = localAlign supportsLocal.bottom
-            left = localAlign supportsLocal.left
-            right = localAlign supportsLocal.right
-        }
+        // regardless of the coordinate system, these 4 points are the supports. 
+        // the left support is the left most one, the right support the right most one, etc.
+        supports = supports
         basisVectors = (u1, u2)
         // since supports are in the local coordinate anchored along the bottom line,
         // system support.bottom.y = 0. Therefore the height is just the height of the top support
@@ -192,7 +224,9 @@ let OrientedBoundingBox points =
         // the minimum rectangle that is incident with it
         |> List.mapi (fun i point ->
             // since we are going counter-clockwise, if we are at the end, next is the start
-            let nextPoint = if i = hull.Length-1 then points.[0] else points.[i + 1]
+            let nextPoint = if i = hull.Length-1 then hull.[0] else hull.[i + 1]
+
+            printf "rectangle on edge %A -> %A \n" point nextPoint
 
             // compute the bounding box for the points oriented along the edge
             boundingBoxAlongEdge points (Edge (point, nextPoint))

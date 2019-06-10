@@ -12,6 +12,7 @@
     }
   ],
   "settings": {
-    "FSharp.fsacRuntime": "netcore"
+    "FSharp.fsacRuntime": "netcore",
+    "FSharp.disableFailedProjectNotifications": true
   }
 }
