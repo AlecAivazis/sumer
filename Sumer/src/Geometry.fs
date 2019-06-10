@@ -211,9 +211,10 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
     }
 
 /// Compute the oriented bounding box of a set of points in two dimensions.
-let OrientedBoundingBox2D points =
+let OrientedBoundingBox2D (points: seq<Vector2>) =
+    let points' = points |> Seq.toList
     // grab the list of points that make the convex hull of what we were given
-    match points |> ConvexHull2D with
+    match points' |> ConvexHull2D with
     | ConvexHull hull ->
         hull
         // string the hull vertices together to form form edges and compute
@@ -223,7 +224,7 @@ let OrientedBoundingBox2D points =
             let nextPoint = if i = hull.Length-1 then hull.[0] else hull.[i + 1]
 
             // compute the bounding box for the points oriented along the edge
-            boundingBoxAlongEdge points (Edge (point, nextPoint))
+            boundingBoxAlongEdge points' (Edge (point, nextPoint))
         )
         // find the rectangle with the smallest area
         |> List.minBy (fun { area = area } ->  area)

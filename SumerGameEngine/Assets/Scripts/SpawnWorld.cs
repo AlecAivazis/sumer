@@ -51,7 +51,7 @@ public class SpawnWorld : MonoBehaviour
 
         // Since the minimum area rectangle must be along one of the edges of the convex hull,
         // we need to go over every one compute the minimum area, and then find the smallest result.
-        Rectangle box = OrientedBoundingBox2D(ListModule.OfSeq(planePoints));
+        Rectangle box = OrientedBoundingBox2D(planePoints);
 
         // convert the 4 points that define the extent of the boudning box
         return (new List<Vector2>{
