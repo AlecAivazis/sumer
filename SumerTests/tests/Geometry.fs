@@ -87,7 +87,7 @@ type GeometryTests () =
                 Assert.That(points, Is.EquivalentTo(test.expected), test.name)
 
     [<Test>]
-    member this.OrientedBoundingBox() =
+    member this.OrientedBoundingBox2D() =
         let table: List<RectangleTestCase> = [
             {
                 name = "convex shape"
@@ -154,7 +154,7 @@ type GeometryTests () =
 
         for test in table do
             // compute the oriented bounding box
-            let box = test.points |> OrientedBoundingBox
+            let box = test.points |> OrientedBoundingBox2D
 
             // make sure we set the right basis vectors
             Assert.That(box.basisVectors, Is.EqualTo(test.expected.basisVectors), test.name)

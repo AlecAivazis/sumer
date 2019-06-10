@@ -114,7 +114,7 @@ let private align (u1: Vector2) (u2: Vector2) (origin: Vector2) (point: Vector2)
         origin.y + Vector2.Dot(location, Vector2.up)
     )
 
-let stretchRectangleBounds (prev: RectangleVertices) (p: Vector2) = 
+let stretchRectangleBounds (prev: RectangleVertices) (p: Vector2) =
     // the vertex record we might change
     let mutable supports = prev
 
@@ -141,7 +141,7 @@ let stretchRectangleBounds (prev: RectangleVertices) (p: Vector2) =
 
     // return the new supports taking this point into account
     supports
-    
+
 let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectangle =
     // compute the basis vectors in the space aligned with our two vectors
     let u1 = p2 - p1
@@ -172,13 +172,13 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
     // partially binding the coodinate system
     let localAlign = align u1 u2 p2
 
-    // the support coordinates we want to save should be oriented in global space 
+    // the support coordinates we want to save should be oriented in global space
     let supports = (
-        [ 
-            localAlign supportsLocal.top 
-            localAlign supportsLocal.bottom 
-            localAlign supportsLocal.left 
-            localAlign supportsLocal.right 
+        [
+            localAlign supportsLocal.top
+            localAlign supportsLocal.bottom
+            localAlign supportsLocal.left
+            localAlign supportsLocal.right
         ] |> List.fold  (fun (prev: RectangleVertices) (point: Vector2) ->
             // stretch the bounds to accomodate this vertex if necessary
             let mutable next = stretchRectangleBounds prev point
@@ -198,10 +198,10 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
             bottom = p2
         }
     )
-    
+
     // return the rectangle we just computed
     {
-        // regardless of the coordinate system, these 4 points are the supports. 
+        // regardless of the coordinate system, these 4 points are the supports.
         // the left support is the left most one, the right support the right most one, etc.
         supports = supports
         basisVectors = (u1, u2)
@@ -211,7 +211,7 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
     }
 
 /// Compute the oriented bounding box of a set of points in two dimensions.
-let OrientedBoundingBox points =
+let OrientedBoundingBox2D points =
     // grab the list of points that make the convex hull of what we were given
     match points |> ConvexHull2D with
     | ConvexHull hull ->
