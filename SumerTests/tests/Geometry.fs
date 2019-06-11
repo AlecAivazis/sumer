@@ -20,7 +20,7 @@ type RectangleTestCase = {
 type RectangleCorners = {
     name: string
     rectangle: Rectangle
-    expected: Vector2 * Vector2 * Vector2 * Vector2
+    expected: List<Vector2>
 }
 
 
@@ -61,17 +61,17 @@ type GeometryTests () =
                     Supports = {
                         top = Vector2.up
                         left = Vector2.zero
-                        right = Vector2(1.f, 1.f)
+                        right = Vector2 (1.f, 1.f)
                         bottom = Vector2.right
                     }
                     BasisVectors = (Vector2.right, Vector2.up)
                 }
-                expected = (
-                            Vector2.up,
-                            Vector2(1.f, 1.f),
-                            Vector2.zero,
+                expected = [
+                            Vector2.up
+                            Vector2 (1.f, 1.f)
+                            Vector2.zero
                             Vector2.right
-                        )
+                        ]
             }
         ]
 

@@ -110,16 +110,16 @@ type Rectangle = {
                 let width = this.Width / 2.f
                 let height = this.Height / 2.f
                 // the top left corner is half a width to the left and half a height up
-                (
+                [
                     // top left
-                    center + (-width * u1) + (height * u2),
+                    center + (-width * u1) + (height * u2)
                     // top right
-                    center + (width * u1) + (height * u2),
+                    center + (width * u1) + (height * u2)
                     // bottom left
-                    center + (-width * u1) + (-height * u2),
+                    center + (-width * u1) + (-height * u2)
                     // bottom right
                     center + (width * u1) + (-height * u2)
-                )
+                ]
 
     member this.Center
         with get() =

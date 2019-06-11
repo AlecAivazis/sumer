@@ -8,10 +8,18 @@ using static Sumer.Geometry;
 
 public class SpawnWorld : MonoBehaviour
 {
+    /// the prefab with all of the objects necessary to create the scene
+    public GameObject contentPrefab;
+    /// the object to use in game for the walls of the generated room
+    public GameObject wall;
+
 
     // the only thing we need to do is create the scene when we spawn
     void Start()
     {
+        // the first thing to do is spawn the prefab content for the room
+        Instantiate(contentPrefab, Vector3.zero, Quaternion.identity);
+
         // grab the play boundary defined by the oculus system
         OVRBoundary boundary = OVRManager.boundary;
         // the origin of VR space
@@ -23,22 +31,15 @@ public class SpawnWorld : MonoBehaviour
         Rectangle r = this.boundingBox();
 
         // convert supports into 3D space
-        List<Vector3> supports = (new List<Vector2>{
-            r.supports.top,
-            r.supports.right,
-            r.supports.bottom,
-            r.supports.left,
-        // back into 3D vectors
-        }).Select(point => new Vector3(point.x, origin.position.y, point.y)).ToList();
+        List<Vector3> corners = (r.Corners).Select(point => new Vector3(
+            origin.position.x + point.x,
+            origin.position.y,
+            origin.position.z + point.y
+        )).ToList();
 
         // the rectangle basis vectors in 3D
-        Vector3 u1 = new Vector3(r.basisVectors.Item1.x, 0, r.basisVectors.Item1.y);
-        Vector3 u2 = new Vector3(r.basisVectors.Item2.x, 0, r.basisVectors.Item2.y);
-        // the corners of the room should be slightly out from the boundary
-        Vector3 leftAnchor = supports[3] - u1;
-        Vector3 rightAnchor = supports[1] + u1;
-        Vector3 topAnchor = supports[0] + u2;
-        Vector3 bottomAnchor = supports[2] - u2;
+        Vector3 u1 = new Vector3(r.BasisVectors.Item1.x, 0, r.BasisVectors.Item1.y);
+        Vector3 u2 = new Vector3(r.BasisVectors.Item2.x, 0, r.BasisVectors.Item2.y);
 
         /// generate the environment
 
@@ -50,14 +51,18 @@ public class SpawnWorld : MonoBehaviour
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.transform.position = FindObjectsOfType<OVRCameraRig>()[0].trackingSpace.transform.position; // make sure the plan is in line with the ground
 
-        // some spheres to highlight the supports
-        createSphere(topAnchor + Vector3.up, Color.red);
-        createSphere(rightAnchor + Vector3.up, Color.blue);
-        createSphere(bottomAnchor + Vector3.up, Color.yellow);
-        createSphere(leftAnchor + Vector3.up, Color.green);
+        // move the light source to the inside of the building
+        Light light = FindObjectsOfType<Light>()[0];
+        light.transform.position = new Vector3(r.Center.x, ground.transform.position.y + 3, r.Center.y);
 
-        // we need to compute the 4 corners of the rectangle which are defined
-        // as the intersection points between the support lines
+        // the wall from top left to top right
+        createWall(corners[0], corners[1], Color.red);
+        // the wall from top right to bottom right
+        createWall(corners[1], corners[3], Color.yellow);
+        // the wall from top left to bottom left
+        createWall(corners[0], corners[2], Color.green);
+        // the wall from bottom left to bottom right
+        createWall(corners[2], corners[3], Color.blue);
     }
 
     Rectangle boundingBox()
@@ -82,5 +87,30 @@ public class SpawnWorld : MonoBehaviour
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         sphere.transform.position = location;
         sphere.GetComponent<Renderer>().material.SetColor("_Color", color);
+    }
+
+    GameObject createWall(Vector3 p1, Vector3 p2, Color color)
+    {
+        // instantiate a copy of the wall prefab
+        GameObject newWall = Instantiate(wall, p1, Quaternion.identity) as GameObject;
+
+        // compute the distance between the two points
+        float distance = Vector3.Distance(p1, p2);
+
+
+        // make the wall face where its going
+        newWall.transform.LookAt(p2);
+        // put it in the middle
+        newWall.transform.position = p1 + distance / 2 * newWall.transform.forward;
+
+        Vector3 oldScale = newWall.transform.localScale;
+        // stretch the newWall to fill the gap
+        newWall.transform.localScale = new Vector3(0, oldScale.y, distance);
+
+        // color the newWall
+        newWall.GetComponent<Renderer>().material.SetColor("_Color", color);
+
+        // we're done here
+        return newWall;
     }
 }
