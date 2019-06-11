@@ -90,12 +90,45 @@ type RectangleVertices = {
     top: Vector2
 }
 
+
 // a rectangle used in tracking and computing bounding boxes
 type Rectangle = {
-    basisVectors: Vector2 * Vector2
-    supports: RectangleVertices
-    area: float32
-}
+    BasisVectors: Vector2 * Vector2
+    Supports: RectangleVertices
+    Height: float32
+    Width: float32
+} with
+    // return the corners of the rectangle
+    member this.Corners
+        with get() =
+            // find the center of the rectangle
+            let center = this.Center
+
+            match this.BasisVectors with
+            | (u1, u2) ->
+                // save half extents for adding vectors to center
+                let width = this.Width / 2.f
+                let height = this.Height / 2.f
+                // the top left corner is half a width to the left and half a height up
+                (
+                    // top left
+                    center + (-width * u1) + (height * u2),
+                    // top right
+                    center + (width * u1) + (height * u2),
+                    // bottom left
+                    center + (-width * u1) + (-height * u2),
+                    // bottom right
+                    center + (width * u1) + (-height * u2)
+                )
+
+    member this.Center
+        with get() =
+            Vector2(
+                (this.Supports.left.x + this.Supports.right.x) / 2.f ,
+                (this.Supports.top.y + this.Supports.bottom.y) / 2.f
+            )
+
+    member this.Area with get() = this.Width * this.Height
 
 let Rotate2D (angle: float32) (vec: Vector2) : Vector2 =
     Vector2(
@@ -203,11 +236,12 @@ let private boundingBoxAlongEdge (points: List<Vector2>) (Edge (p1, p2)): Rectan
     {
         // regardless of the coordinate system, these 4 points are the supports.
         // the left support is the left most one, the right support the right most one, etc.
-        supports = supports
-        basisVectors = (u1, u2)
+        Supports = supports
+        BasisVectors = (u1, u2)
         // since supports are in the local coordinate anchored along the bottom line,
         // system support.bottom.y = 0. Therefore the height is just the height of the top support
-        area = (supportsLocal.right.x - supportsLocal.left.x) * supportsLocal.top.y
+        Height = supportsLocal.top.y
+        Width = supportsLocal.right.x - supportsLocal.left.x
     }
 
 /// Compute the oriented bounding box of a set of points in two dimensions.
@@ -227,4 +261,4 @@ let OrientedBoundingBox2D (points: seq<Vector2>) =
             boundingBoxAlongEdge points' (Edge (point, nextPoint))
         )
         // find the rectangle with the smallest area
-        |> List.minBy (fun { area = area } ->  area)
+        |> List.minBy (fun rect ->  rect.Area)

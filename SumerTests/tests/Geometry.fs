@@ -17,9 +17,67 @@ type RectangleTestCase = {
     expected: Rectangle
 }
 
+type RectangleCorners = {
+    name: string
+    rectangle: Rectangle
+    expected: Vector2 * Vector2 * Vector2 * Vector2
+}
+
 
 [<TestFixture>]
 type GeometryTests () =
+    [<Test>]
+    member this.RectangleProperties() =
+        // a rectangle to test
+        let rectangle  = {
+            Width = 1.f
+            Height = 1.f
+            Supports = {
+                top = Vector2.up
+                left = Vector2.zero
+                right = Vector2(1.f, 1.f)
+                bottom = Vector2.right
+            }
+            BasisVectors = (Vector2.right, Vector2.up)
+        }
+
+        // we should be able to compute the area
+        Assert.That(rectangle.Area, Is.EqualTo(1))
+
+        // as well as the center
+        Assert.That(rectangle.Center.x, Is.EqualTo(0.5f))
+        Assert.That(rectangle.Center.y, Is.EqualTo(0.5f))
+
+
+    [<Test>]
+    member this.RectangleCorners() =
+        // the list of rectangles to test
+        let table = [
+            {
+                name = "axis aligned square"
+                rectangle  = {
+                    Width = 1.f
+                    Height = 1.f
+                    Supports = {
+                        top = Vector2.up
+                        left = Vector2.zero
+                        right = Vector2(1.f, 1.f)
+                        bottom = Vector2.right
+                    }
+                    BasisVectors = (Vector2.right, Vector2.up)
+                }
+                expected = (
+                            Vector2.up,
+                            Vector2(1.f, 1.f),
+                            Vector2.zero,
+                            Vector2.right
+                        )
+            }
+        ]
+
+        for test in table do
+                Assert.That(test.rectangle.Corners, Is.EqualTo(test.expected), test.name)
+
 
     [<Test>]
     member this.ConvexHull() =
@@ -98,14 +156,15 @@ type GeometryTests () =
                     Vector2(0.f, 1.f)
                 ]
                 expected = {
-                    supports = {
+                    Supports = {
                         top = Vector2.up
                         left = Vector2.zero
                         right = Vector2(1.f, 1.f)
                         bottom = Vector2.right
                     }
-                    basisVectors = (Vector2.right, Vector2.up)
-                    area = 1.0f
+                    BasisVectors = (Vector2.right, Vector2.up)
+                    Width = 1.f
+                    Height = 1.f
                 }
             }
             {
@@ -121,14 +180,15 @@ type GeometryTests () =
                     Vector2(0.f, 2.f)
                 ]
                 expected = {
-                    supports = {
+                    Supports = {
                         top = Vector2(0.f, 2.f)
                         left = Vector2.zero
                         right = Vector2(3.f, 2.f)
                         bottom = Vector2(3.f, 0.f)
                     }
-                    area = 6.0f
-                    basisVectors = (Vector2.right, Vector2.up)
+                    Width = 3.f
+                    Height = 2.f
+                    BasisVectors = (Vector2.right, Vector2.up)
                 }
             }
             {
@@ -140,14 +200,15 @@ type GeometryTests () =
                     Vector2(0.f, 1.f)
                 ]
                 expected = {
-                    supports = {
+                    Supports = {
                         bottom = Vector2.right
                         right = Vector2(2.f, 1.f)
                         top = Vector2(1.f, 2.f)
                         left = Vector2.up
                     }
-                    basisVectors = ( Rotate2D (Mathf.PI/4.f) Vector2.right, Rotate2D (3.f*Mathf.PI/4.f) Vector2.right)
-                    area = 2.f
+                    BasisVectors = ( Rotate2D (Mathf.PI/4.f) Vector2.right, Rotate2D (3.f*Mathf.PI/4.f) Vector2.right)
+                    Width = 1.f/Mathf.Sqrt(2.f)
+                    Height = 1.f/Mathf.Sqrt(2.f)
                 }
             }
         ]
@@ -157,20 +218,21 @@ type GeometryTests () =
             let box = test.points |> OrientedBoundingBox2D
 
             // make sure we set the right basis vectors
-            Assert.That(box.basisVectors, Is.EqualTo(test.expected.basisVectors), test.name)
+            Assert.That(box.BasisVectors, Is.EqualTo(test.expected.BasisVectors), test.name)
             // make sure that we calculated a reasonably close area
-            Assert.That(Mathf.Round(box.area), Is.EqualTo(Mathf.Round(test.expected.area)), test.name)
+            Assert.That(Mathf.Round(box.Height), Is.EqualTo(Mathf.Round(test.expected.Height)), test.name)
+            Assert.That(Mathf.Round(box.Width), Is.EqualTo(Mathf.Round(test.expected.Width)), test.name)
 
             // make sure we grabbed the right supports
             let assertEqual a b =
                 Assert.That(Mathf.Round(a), Is.EqualTo(Mathf.Round(b)), test.name)
 
             // make sure that each coordinate is roughly the same as its equivalent
-            assertEqual box.supports.top.y test.expected.supports.top.y
-            assertEqual box.supports.left.x test.expected.supports.left.x
-            assertEqual box.supports.left.y test.expected.supports.left.y
-            assertEqual box.supports.right.x test.expected.supports.right.x
-            assertEqual box.supports.right.y test.expected.supports.right.y
-            assertEqual box.supports.bottom.x test.expected.supports.bottom.x
-            assertEqual box.supports.bottom.y test.expected.supports.bottom.y
+            assertEqual box.Supports.top.y test.expected.Supports.top.y
+            assertEqual box.Supports.left.x test.expected.Supports.left.x
+            assertEqual box.Supports.left.y test.expected.Supports.left.y
+            assertEqual box.Supports.right.x test.expected.Supports.right.x
+            assertEqual box.Supports.right.y test.expected.Supports.right.y
+            assertEqual box.Supports.bottom.x test.expected.Supports.bottom.x
+            assertEqual box.Supports.bottom.y test.expected.Supports.bottom.y
 
