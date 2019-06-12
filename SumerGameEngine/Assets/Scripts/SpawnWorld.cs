@@ -13,12 +13,16 @@ public class SpawnWorld : MonoBehaviour
     /// the object to use in game for the walls of the generated room
     public GameObject wall;
 
+    // an internal reference to the room game object
+    GameObject room;
+
 
     // the only thing we need to do is create the scene when we spawn
     void Start()
     {
         // the first thing to do is spawn the prefab content for the room
-        Instantiate(contentPrefab, Vector3.zero, Quaternion.identity);
+        GameObject content = Instantiate(contentPrefab, Vector3.zero, Quaternion.identity);
+        content.name = "Environment";
 
         // grab the play boundary defined by the oculus system
         OVRBoundary boundary = OVRManager.boundary;
@@ -46,27 +50,32 @@ public class SpawnWorld : MonoBehaviour
         // make sure the boundary is always visible
         boundary.SetVisible(true);
 
-        // create the ground plane
-        Vector3 boxDims = boundary.GetDimensions(OVRBoundary.BoundaryType.OuterBoundary);
-        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        ground.transform.position = FindObjectsOfType<OVRCameraRig>()[0].trackingSpace.transform.position; // make sure the plan is in line with the ground
-
         // move the light source to the inside of the building
         Light light = FindObjectsOfType<Light>()[0];
         light.transform.position = new Vector3(
-            ground.transform.position.x + r.Center.x,
-            ground.transform.position.y + 3,
-            ground.transform.position.z + r.Center.y
+            origin.position.x + r.Center.x,
+            origin.position.y + 3,
+            origin.position.z + r.Center.y
         );
 
+        // a game object to house the entire room
+        room = new GameObject();
+        room.name = "Room";
+
+        // create the ground plane
+        Vector3 boxDims = boundary.GetDimensions(OVRBoundary.BoundaryType.OuterBoundary);
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        ground.transform.position = origin.position; // make sure the plan is in line with the ground
+        ground.transform.parent = room.transform;
+
         // the wall from top left to top right
-        createWall(corners[0], corners[1], Color.red);
+        createWall(corners[0], corners[1], Color.red).name = "Top Wall";
         // the wall from top right to bottom right
-        createWall(corners[1], corners[3], Color.yellow);
+        createWall(corners[1], corners[3], Color.yellow).name = "Right Wall";
         // the wall from top left to bottom left
-        createWall(corners[0], corners[2], Color.green);
+        createWall(corners[0], corners[2], Color.green).name = "Left Wall";
         // the wall from bottom left to bottom right
-        createWall(corners[2], corners[3], Color.blue);
+        createWall(corners[2], corners[3], Color.blue).name = "Bottom Wall";
     }
 
     Rectangle boundingBox()
@@ -109,6 +118,7 @@ public class SpawnWorld : MonoBehaviour
     {
         // instantiate a copy of the wall prefab
         GameObject newWall = Instantiate(wall, p1, Quaternion.identity) as GameObject;
+        newWall.transform.parent = room.transform;
 
         // compute the height of the wall object
         float height = newWall.transform.localScale.y;
