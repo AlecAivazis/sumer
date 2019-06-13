@@ -16,7 +16,6 @@ public class SpawnWorld : MonoBehaviour
     // an internal reference to the room game object
     GameObject room;
 
-
     // the only thing we need to do is create the scene when we spawn
     void Start()
     {
@@ -126,7 +125,6 @@ public class SpawnWorld : MonoBehaviour
         // compute the distance between the two points
         float distance = Vector3.Distance(p1, p2);
 
-
         // make the wall face where its going
         newWall.transform.LookAt(p2);
         // put it in the middle
@@ -134,7 +132,7 @@ public class SpawnWorld : MonoBehaviour
 
         Vector3 oldScale = newWall.transform.localScale;
         // stretch the newWall to fill the gap
-        newWall.transform.localScale = new Vector3(0, oldScale.y, distance);
+        newWall.transform.localScale = new Vector3(oldScale.x, oldScale.y, distance);
 
         // color the newWall
         newWall.GetComponent<Renderer>().material.SetColor("_Color", color);
