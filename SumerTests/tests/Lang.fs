@@ -19,6 +19,7 @@ type LangTests () =
     member this.ParseSimpleCommand() =
         // parse a test command
         match ParseCommand("hello") with
+        | ParseError err -> Assert.That(true, Is.EqualTo(false), err)
         | ParseResult cmd ->
             // make sure there is only 1 task
             Assert.That(cmd.Tasks.Length, Is.EqualTo(1))
@@ -27,13 +28,12 @@ type LangTests () =
             // make sure it has the right action and arguments
             Assert.That(task.Action, Is.EqualTo("hello"))
             Assert.That(task.Arguments, Is.EquivalentTo([]))
-        | ParseError err ->
-            Assert.That(err, Is.Not.EqualTo(""))
 
     [<Test>]
     member this.ParseCommandWithArgs() =
         // parse a test command
         match ParseCommand("hello world") with
+        | ParseError err -> Assert.That(true, Is.EqualTo(false), err)
         | ParseResult cmd ->
             // make sure there is only 1 task
             Assert.That(cmd.Tasks.Length, Is.EqualTo(1))
@@ -42,5 +42,3 @@ type LangTests () =
             // make sure it has the right action and arguments
             Assert.That(task.Action, Is.EqualTo("hello"))
             Assert.That(task.Arguments, Is.EquivalentTo(["world"]))
-        | ParseError err ->
-            Assert.That(err, Is.Not.EqualTo(""))
