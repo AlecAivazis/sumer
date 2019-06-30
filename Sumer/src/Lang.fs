@@ -1,5 +1,7 @@
 module Sumer.Language
 
+type ParseError = string
+
 // Task is the atomic unit of mutation that the user can perform
 type Task(words: string list) =
     member this.Action
@@ -22,6 +24,7 @@ type Command(tasks: Task list) =
         with get() : Task list =
             tasks
 
+type ParseResult = ParseResult of Command | ParseError of string
 // takes a string assumed to be spoken text and creates the underlying command
 // that needs to be executed
-let ParseCommand (sentence: string): Command = Command ([Task (List.ofSeq(sentence.Split ' '))]);
+let ParseCommand (sentence: string): ParseResult = ParseResult (Command ([Task (List.ofSeq(sentence.Split ' '))]));

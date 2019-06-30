@@ -9,25 +9,29 @@ type LangTests () =
     [<Test>]
     member this.ParseSimpleCommand() =
         // parse a test command
-        let command = ParseCommand("hello")
+        match ParseCommand("hello") with
+        | ParseResult cmd ->
+            // make sure there is only 1 task
+            Assert.That(cmd.Tasks.Length, Is.EqualTo(1))
+            let task = cmd.Tasks.[0]
 
-        // make sure there is only 1 task
-        Assert.That(command.Tasks.Length, Is.EqualTo(1))
-        let task = command.Tasks.[0]
-
-        // make sure it has the right actions and arguments
-        Assert.That(task.Action, Is.EqualTo("hello"))
-        Assert.That(task.Arguments, Is.EquivalentTo([]))
+            // make sure it has the right action and arguments
+            Assert.That(task.Action, Is.EqualTo("hello"))
+            Assert.That(task.Arguments, Is.EquivalentTo([]))
+        | ParseError err ->
+            Assert.That(err, Is.Not.EqualTo(""))
 
     [<Test>]
     member this.ParseCommandWithArgs() =
         // parse a test command
-        let command = ParseCommand("hello world")
+        match ParseCommand("hello world") with
+        | ParseResult cmd ->
+            // make sure there is only 1 task
+            Assert.That(cmd.Tasks.Length, Is.EqualTo(1))
+            let task = cmd.Tasks.[0]
 
-        // make sure there is only 1 task
-        Assert.That(command.Tasks.Length, Is.EqualTo(1))
-        let task = command.Tasks.[0]
-
-        // make sure it has the right actions and arguments
-        Assert.That(task.Action, Is.EqualTo("hello"))
-        Assert.That(task.Arguments, Is.EquivalentTo(["world"]))
+            // make sure it has the right action and arguments
+            Assert.That(task.Action, Is.EqualTo("hello"))
+            Assert.That(task.Arguments, Is.EquivalentTo(["world"]))
+        | ParseError err ->
+            Assert.That(err, Is.Not.EqualTo(""))
