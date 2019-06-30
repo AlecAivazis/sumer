@@ -1,7 +1,7 @@
 namespace Sumer.Tests
 
 open NUnit.Framework
-open Sumer.Language
+open Sumer.Command
 
 
 [<TestFixture>]

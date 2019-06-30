@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <Compile Include="src/Geometry.fs" />
-    <Compile Include="src/Lang.fs" />
+    <Compile Include="src/Command.fs" />
   </ItemGroup>
 
   <ItemGroup>

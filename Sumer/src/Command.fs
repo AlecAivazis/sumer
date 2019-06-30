@@ -1,4 +1,4 @@
-module Sumer.Language
+module Sumer.Command
 
 type ParseError = string
 
