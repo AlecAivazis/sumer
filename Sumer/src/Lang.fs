@@ -27,4 +27,10 @@ type Command(tasks: Task list) =
 type ParseResult = ParseResult of Command | ParseError of string
 // takes a string assumed to be spoken text and creates the underlying command
 // that needs to be executed
-let ParseCommand (sentence: string): ParseResult = ParseResult (Command ([Task (List.ofSeq(sentence.Split ' '))]));
+let ParseCommand (sentence: string): ParseResult =
+    if sentence.Length = 0 then
+        ParseError "Must pass a non-empty string"
+    else
+        // no errors just return the result
+        ParseResult (Command ([Task (List.ofSeq(sentence.Split ' '))]));
+

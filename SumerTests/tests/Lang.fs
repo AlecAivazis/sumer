@@ -7,6 +7,15 @@ open Sumer.Language
 [<TestFixture>]
 type LangTests () =
     [<Test>]
+    member this.ParseEmptyCommand() =
+        // parse a test command
+        match ParseCommand("") with
+        | ParseError error ->
+            Assert.That(error, Is.Not.EqualTo(""))
+        | ParseResult _ ->
+            Assert.That(true, Is.EqualTo(false), "did not encounter error")
+
+    [<Test>]
     member this.ParseSimpleCommand() =
         // parse a test command
         match ParseCommand("hello") with
