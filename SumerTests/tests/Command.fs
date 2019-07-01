@@ -10,10 +10,10 @@ type LangTests () =
     member this.ParseEmptyCommand() =
         // parse a test command
         match ParseCommand("") with
-        | ParseError error ->
-            Assert.That(error, Is.Not.EqualTo(""))
-        | ParseResult _ ->
-            Assert.That(true, Is.EqualTo(false), "did not encounter error")
+        | ParseError err -> Assert.That(true, Is.EqualTo(false), err)
+        | ParseResult cmd ->
+            // the empty string is a command with no tasks
+            Assert.That(cmd.Tasks.Length, Is.EqualTo(0))
 
     [<Test>]
     member this.ParseSimpleCommand() =
@@ -41,4 +41,4 @@ type LangTests () =
 
             // make sure it has the right action and arguments
             Assert.That(task.Action, Is.EqualTo("hello"))
-            Assert.That(task.Arguments, Is.EquivalentTo(["world"]))
+            Assert.That(task.Arguments, Is.EquivalentTo([Identifier "world"]))

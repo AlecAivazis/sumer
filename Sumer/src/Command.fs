@@ -1,21 +1,18 @@
 module Sumer.Command
 
-type ParseError = string
 
-// Task is the atomic unit of mutation that the user can perform
-type Task(words: string list) =
-    member this.Action
-        with get() =
-            // for now the action is just the first word in the command
-            words.[0]
+/// First-class citizens (can be the value of a variable)
+type Symbol = Identifier of string | String of string
 
-    member this.Arguments
-        with get() =
-            match words with
-            // if there is only one element in the list, there are no arguments to the action
-            | [_] -> []
-            // the arguments are everything after the action
-            | _ -> words.[1..words.Length - 1]
+/// Everything in a Command AST is a Node
+type Node = Symbol
+
+type Task = {
+    Action: string;
+    Arguments: Symbol list;
+}
+
+type private Maybe<'T> = Result of 'T | Error of string
 
 // A single command contains many tasks
 type Command(tasks: Task list) =
@@ -25,12 +22,40 @@ type Command(tasks: Task list) =
             tasks
 
 type ParseResult = ParseResult of Command | ParseError of string
+
+let private parseArguments (input: string list ): Maybe<Symbol list> =
+    match input with
+    // an empty input has no arguments
+    | [] -> Result []
+    // a non-empty list has arguments
+    | head :: _ ->
+        // otherwise treat the head as an indentifier
+        Result ([Identifier head])
+
+
 // takes a string assumed to be spoken text and creates the underlying command
 // that needs to be executed
 let ParseCommand (sentence: string): ParseResult =
+    // if the sentence is empty
     if sentence.Length = 0 then
-        ParseError "Must pass a non-empty string"
+        // return an empty command
+        ParseResult (Command [])
+
+    // there is something to do
     else
-        // no errors just return the result
-        ParseResult (Command ([Task (List.ofSeq(sentence.Split ' '))]));
+        // grab the words in the sentence
+        let words = sentence.Split ' '
+
+        // the first word defines the action of the command
+        let action = words.[0]
+
+        // try to get the arguments in the rest of the sentence
+        match parseArguments (List.ofSeq words.[1..words.Length - 1]) with
+        | Error err -> ParseError err
+        | Result args ->
+            // for now assume there is only one task in the command
+            ParseResult (Command [{
+                Action = action;
+                Arguments = args;
+            }])
 

@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Include="tests/Geometry.fs"/>
     <Compile Include="tests/Command.fs"/>
+    <Compile Include="tests/Executor.fs"/>
   </ItemGroup>
 
   <ItemGroup>
