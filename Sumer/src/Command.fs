@@ -2,14 +2,14 @@ module Sumer.Command
 
 
 /// First-class citizens (can be the value of a variable)
-type Symbol = Identifier of string | String of string
+type Citizen = Identifier of string | String of string
 
 /// Everything in a Command AST is a Node
 type Node = Symbol
 
 type Task = {
     Action: string;
-    Arguments: Symbol list;
+    Arguments: Citizen list;
 }
 
 type private Maybe<'T> = Result of 'T | Error of string
@@ -23,18 +23,40 @@ type Command(tasks: Task list) =
 
 type ParseResult = ParseResult of Command | ParseError of string
 
-let private parseArguments (input: string list ): Maybe<Symbol list> =
+let private parseArguments (input: string list): Maybe<Citizen list> =
     match input with
     // an empty input has no arguments
     | [] -> Result []
+    // a string starts with "quote"
+    | "quote" :: t ->
+        let mutable tail = t
+        // staet accumulating the words between quotes
+        let mutable result = ""
+        let mutable foundUnquote = false
+
+        // the string ends with another "quote"
+        while not foundUnquote || tail.Length > 0 do
+            // if we found the unquote
+            if tail.Head = "quote" then
+                // track it
+                foundUnquote <- true
+            else
+                // add the head to the accumulator
+                result <- result + tail.Head
+
+            // make sure we move one in the list
+            tail <- tail.Tail
+
+        Result [(String result)]
+
     // a non-empty list has arguments
     | head :: _ ->
+
         // otherwise treat the head as an indentifier
         Result ([Identifier head])
 
 
-// takes a string assumed to be spoken text and creates the underlying command
-// that needs to be executed
+// takes a string assumed to be spoken text and creates the command that needs to be executed
 let ParseCommand (sentence: string): ParseResult =
     // if the sentence is empty
     if sentence.Length = 0 then

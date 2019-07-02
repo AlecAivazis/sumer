@@ -42,3 +42,19 @@ type LangTests () =
             // make sure it has the right action and arguments
             Assert.That(task.Action, Is.EqualTo("hello"))
             Assert.That(task.Arguments, Is.EquivalentTo([Identifier "world"]))
+
+    [<Test>]
+    member this.ParseArguments() =
+        // the cases to test
+        let cases = [
+            ("string", "hello quote world quote", [String "world"]);
+        ]
+
+        for (title, command, expected) in cases do
+            // parse the command
+            match ParseCommand command with
+            | ParseError err -> Assert.That(true, Is.EqualTo(false), title + ": " + err)
+            | ParseResult res ->
+                // make sure the arguments match our expectations
+                Assert.That(res.Tasks.[0].Arguments, Is.EquivalentTo([String "world"]))
+

@@ -10,7 +10,7 @@ type ExecutorTests () =
 
     [<Test>]
     member this.ErrorCases() =
-        let cases: (string * string * (string * Symbol) list) list = [
+        let cases: (string * string * (string * Citizen) list) list = [
             ("unknown identifier as action", "print", []);
         ]
 
@@ -25,11 +25,12 @@ type ExecutorTests () =
 
                 // execute the command
                 match exec.Execute "" cmd with
+                // if there are no errors
                 | (_, []) ->
                     // no error was found. test failed.
                     Assert.That(true, Is.EqualTo(false), "Did not encounter an error: " + message)
-                | (_, [err]) ->
+
+                // there are errors
+                | (_, errs) ->
                     // an error was found so the test passed
                     ()
-
-
