@@ -56,5 +56,19 @@ type LangTests () =
             | ParseError err -> Assert.That(true, Is.EqualTo(false), title + ": " + err)
             | ParseResult res ->
                 // make sure the arguments match our expectations
-                Assert.That(res.Tasks.[0].Arguments, Is.EquivalentTo([String "world"]))
+                Assert.That(res.Tasks.[0].Arguments, Is.EquivalentTo(expected))
 
+    [<Test>]
+    member this.ParseArgumentErrors() =
+        // the cases to test
+        let cases = [
+            ("string", "hello quote world");
+        ]
+
+        for (title, command) in cases do
+            // parse the command
+            match ParseCommand command with
+            | ParseResult _ -> Assert.That(true, Is.EqualTo(false), title)
+            | ParseError err ->
+                // we encountered an error as expected
+                ()

@@ -35,7 +35,7 @@ let private parseArguments (input: string list): Maybe<Citizen list> =
         let mutable foundUnquote = false
 
         // the string ends with another "quote"
-        while not foundUnquote || tail.Length > 0 do
+        while not foundUnquote && tail.Length > 0 do
             // if we found the unquote
             if tail.Head = "quote" then
                 // track it
@@ -47,7 +47,14 @@ let private parseArguments (input: string list): Maybe<Citizen list> =
             // make sure we move one in the list
             tail <- tail.Tail
 
-        Result [(String result)]
+        // if we found the unquote
+        if foundUnquote then
+            // return the result
+            Result [(String result)]
+        // if we didn't find the closing quote
+        else
+            // we have to return an error
+            Error "Did not find matching quote"
 
     // a non-empty list has arguments
     | head :: _ ->
