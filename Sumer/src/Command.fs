@@ -1,8 +1,21 @@
 module Sumer.Command
 
+type Binding = {
+    Name: string
+}
 
-/// First-class citizens (can be the value of a variable)
-type Citizen = Identifier of string | String of string
+type Result = {
+    Name: string
+}
+[<CustomEquality; NoComparison>]
+type Citizen = Identifier of string | String of string | Function of (Binding list -> Result list) with
+    override x.GetHashCode() = 0
+    override this.Equals(o) =
+        match o with
+        | :? Citizen as other->
+            true
+        | _ -> false
+
 
 /// Everything in a Command AST is a Node
 type Node = Symbol
@@ -58,7 +71,6 @@ let private parseArguments (input: string list): Maybe<Citizen list> =
 
     // a non-empty list has arguments
     | head :: _ ->
-
         // otherwise treat the head as an indentifier
         Result ([Identifier head])
 

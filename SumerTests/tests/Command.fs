@@ -6,6 +6,7 @@ open Sumer.Command
 
 [<TestFixture>]
 type LangTests () =
+
     [<Test>]
     member this.ParseEmptyCommand() =
         // parse a test command

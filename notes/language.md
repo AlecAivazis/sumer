@@ -30,3 +30,7 @@ The action is the core behavior of the command. These include:
 ### modifying existing expressions
 
 "change the definition of bar to foo plus two"
+
+### Wait commands
+
+"wait" pauses sumer to allow you to do other things with your life.
