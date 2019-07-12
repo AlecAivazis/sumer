@@ -1,5 +1,8 @@
 mod command;
 
 fn main() {
-    println!("Hello, world!");
+    match command::parse("hello".to_string()) {
+        Err(err) => println!("{}", err),
+        Ok(cmd) => println!("{}", cmd.action),
+    }
 }
