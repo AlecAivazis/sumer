@@ -1,7 +1,12 @@
-# This .gitignore file should be placed at the root of your Unity project directory
-#
-# Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
-#
+# language (rust)
+
+language/target/*
+
+
+
+
+# environment (unity)
+
 [Ll]ibrary/
 */[Ll]ibrary/
 /[Tt]emp/
