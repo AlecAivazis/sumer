@@ -1,3 +1,3 @@
 # sumer
 
-A virtual programming environment
+A virtual programming environment.
