@@ -1,24 +1,32 @@
-# This .gitignore file should be placed at the root of your Unity project directory
-#
-# Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
-#
-[Ll]ibrary/
-*/[Ll]ibrary/
-/[Tt]emp/
-*/[Tt]emp/
-/[Oo]bj/
-*/[Oo]bj/
-/[Bb]uild/
-*/[Bb]uild/
-/[Bb]uilds/
-*/[Bb]uilds/
-/[Ll]ogs/
-*/[Ll]ogs/
-/[Mm]emoryCaptures/
-*/[Mm]emoryCaptures/
+# project
 
-*/bin/*
-*/obj/*
+sumer.code-workspace
+
+# language (rust)
+
+language/target/*
+
+
+
+
+# environment (unity)
+
+/environment/*/[Ll]ibrary/
+/[Tt]emp/
+/environment/*/[Tt]emp/
+/[Oo]bj/
+/environment/*/[Oo]bj/
+/[Bb]uild/
+/environment/*/[Bb]uild/
+/[Bb]uilds/
+/environment/*/[Bb]uilds/
+/[Ll]ogs/
+/environment/*/[Ll]ogs/
+/[Mm]emoryCaptures/
+/environment/*/[Mm]emoryCaptures/
+
+/environment/*/bin/*
+/environment/*/obj/*
 
 Sumer.dll
 
