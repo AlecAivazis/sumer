@@ -7,23 +7,22 @@ language/target/*
 
 # environment (unity)
 
-[Ll]ibrary/
-*/[Ll]ibrary/
+/environment/*/[Ll]ibrary/
 /[Tt]emp/
-*/[Tt]emp/
+/environment/*/[Tt]emp/
 /[Oo]bj/
-*/[Oo]bj/
+/environment/*/[Oo]bj/
 /[Bb]uild/
-*/[Bb]uild/
+/environment/*/[Bb]uild/
 /[Bb]uilds/
-*/[Bb]uilds/
+/environment/*/[Bb]uilds/
 /[Ll]ogs/
-*/[Ll]ogs/
+/environment/*/[Ll]ogs/
 /[Mm]emoryCaptures/
-*/[Mm]emoryCaptures/
+/environment/*/[Mm]emoryCaptures/
 
-*/bin/*
-*/obj/*
+/environment/*/bin/*
+/environment/*/obj/*
 
 Sumer.dll
 
