@@ -7,39 +7,40 @@ use super::command;
 type Scope = HashMap<String, command::Citizen>;
 
 // given some initial state, execute the following command
-pub fn execute<T>(initial_state: T, scope: Scope, cmd: command::Command) -> Result<T, &'static str> {
+pub fn execute<T>(
+    initial_state: T,
+    scope: Scope,
+    cmd: command::Command,
+) -> Result<T, &'static str> {
     // make sure we have the action defined in the scope
     if !scope.contains_key(&cmd.action) {
-        return Result::Err("Action not defined")
+        return Err("Action not defined");
     }
 
     // don't mutate the state just yet
-    Result::Ok(initial_state)
+    Ok(initial_state)
 }
-
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
 
-   #[test]
-   fn error_cases() {
-       // the runtime error cases
-       let cases = vec![
-           ( "Undefined action", "print", HashMap::new()),
-       ];
+    #[test]
+    fn error_cases() {
+        // the runtime error cases
+        let cases = vec![("Undefined action", "print", HashMap::new())];
 
-       for (title, command_text, scope) in cases {
-           // parse the text
-           let command = crate::command::parse(command_text.to_string()).unwrap();
+        for (title, command_text, scope) in cases {
+            // parse the text
+            let command = crate::command::parse(command_text.to_string()).unwrap();
 
             // execute the command
             match execute("", scope, command) {
-                Ok(_) => assert!(false, "did not encounter error"),
+                Ok(_) => assert!(false, title),
                 // there was an error so the test passed
-                Err(_) => ()
+                Err(_) => (),
             }
-       }
-   } 
+        }
+    }
 }

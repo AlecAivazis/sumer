@@ -5,6 +5,7 @@ use std::collections::HashMap;
 mod command;
 mod executor;
 
+#[allow(unused_must_use)]
 fn main() {
     match command::parse("hello".to_string()) {
         Err(err) => println!("{}", err),
