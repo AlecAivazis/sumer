@@ -1,3 +1,13 @@
+// externals
+use nom::{
+    IResult,
+    bytes::complete::{take_while1},
+    combinator::{opt},
+    sequence::tuple,
+    branch::{alt},
+    multi::{many1, separated_list},
+};
+
 /// A Citizen is anything that can be referenced
 #[derive(Debug, Clone)]
 pub enum Citizen {
@@ -23,76 +33,68 @@ impl PartialEq for Citizen {
     }
 }
 
-pub type ParseError = &'static str;
 
-enum Either<A, B> {
-    Left(A),
-    Right(B),
+fn space(input: &str) -> IResult<&str, &str> {
+    take_while1(|c| c == ' ')(input)
 }
 
+fn word(input: &str) -> IResult<&str, &str> {
+    take_while1(|c: char | { c.is_alphanumeric() })(input)
+}
+
+fn identifier(input: &str) -> IResult<&str, Citizen> {
+    // an identifier is a series of words and spaces
+    let (input, id) = many1(alt((space, word)))(input)?;
+
+    // the parser returns a list of every space and word so we have to join them back up
+    Ok((input, Citizen::Identifier(id.join(""))))
+}
+
+fn citizen(input: &str) -> IResult<&str, Citizen> {
+    alt((
+        identifier,
+        identifier
+    ))(input)
+}
+
+fn argument_list(input: &str) -> IResult<&str, Vec<Citizen>> {
+    // the list of arguments to a command are proceeded by a space and then many citizens
+    // separated by the word "and"
+    let (input, (_, arguments)) = tuple((space, separated_list(space, citizen)))(input)?;
+
+    // return the list of arguments
+    Ok((input, arguments))
+}
+
+fn parse_command(input: &str) -> IResult<&str, Command> {
+    // look for the action and optionally a
+    let (input, (action, args)) = tuple((word, opt(argument_list)))(input)?;
+
+    // return the command we just made
+    Ok((input, Command {
+        action: action.to_string(),
+        arguments: match args {
+            None => vec![],
+            Some(args) => args,
+        },
+    }))
+}
+
+
 /// parse a string into the corresponding Command
-pub fn parse(cmd: String) -> Result<Command, ParseError> {
+pub fn parse(cmd: String) -> Result<Command, &'static str> {
     // if we weren't given a string
     if cmd.len() == 0 {
         // yell loudly
         return Err("Encountered empty command");
     }
 
-    // we have a string to parse, split it on space
-    let words: Vec<_> = cmd.split(' ').collect();
-
-    // grab the first word in the list
-    let action = words[0].to_string();
-
-    // try to grab the arguments following the action
-    match parse_arguments(&words[1..]) {
-        Err(err) => Err(err),
-        Ok(arg_list) => Ok(Command {
-            action: action,
-            arguments: arg_list,
-        }),
+    match parse_command(&cmd) {
+        Ok((left, cmd)) => Ok(cmd),
+        Err(_) => Err("e")
     }
 }
 
-fn parse_arguments(words: &[&str]) -> Result<Vec<Citizen>, ParseError> {
-    // if there are no words
-    if words.len() == 0 {
-        // there are no arguments
-        return Ok(vec![]);
-    }
-
-    // the words can be a number of different things
-    match words.split_first() {
-        // if the first word is "quote"
-        Some((head, tail)) if *head == "quote" => {
-            // we have to keep consuming until we find another quote
-            // we'll start by building up a left value with everything
-            // and when we find a right value we'll just return that
-            let body =
-                tail.into_iter()
-                    .fold(Either::Left("".to_string()), |prev, next| match prev {
-                        // if we're still looking then look at the next word
-                        Either::Left(previous_value) => match next {
-                            // if the next word is a quote, we're done just return the previous value
-                            &"quote" => Either::Right(previous_value),
-                            // we're still looking
-                            _ => Either::Left(previous_value + " " + next),
-                        },
-                        // we're done looking
-                        v => v,
-                    });
-
-            match body {
-                // if we
-                Either::Right(value) => Result::Ok(vec![Citizen::Str(value[1..].to_string())]),
-                // we didn't find the unquote
-                Either::Left(_) => Result::Err("Did not find matching quote"),
-            }
-        }
-        // otherwise treat it as an identifier
-        _ => Result::Ok(vec![Citizen::Identifier(words.join(" "))]),
-    }
-}
 
 #[cfg(test)]
 mod tests {
