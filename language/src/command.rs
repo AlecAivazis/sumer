@@ -1,9 +1,9 @@
 // externals
 use nom::{
     IResult,
-    bytes::complete::{take_while1},
-    combinator::{opt},
-    sequence::tuple,
+    bytes::complete::{tag, take_while1, take_until},
+    combinator::{opt, map_res},
+    sequence::{tuple, delimited },
     branch::{alt},
     multi::{many1, separated_list},
 };
@@ -15,6 +15,7 @@ pub enum Citizen {
     Str(String),
 }
 
+#[derive(Debug)]
 pub struct Command {
     pub action: String,
     pub arguments: Vec<Citizen>,
@@ -42,25 +43,45 @@ fn word(input: &str) -> IResult<&str, &str> {
     take_while1(|c: char | { c.is_alphanumeric() })(input)
 }
 
-fn identifier(input: &str) -> IResult<&str, Citizen> {
-    // an identifier is a series of words and spaces
+fn quote(input: &str) -> IResult<&str, &str> {
+    tag("quote")(input)
+}
+
+fn word_sequence(input: &str) -> IResult<&str, String> {
     let (input, id) = many1(alt((space, word)))(input)?;
 
+    return Ok((input, id.join("")))
+}
+
+fn identifier(input: &str) -> IResult<&str, Citizen> {
+    // an identifier is a series of words and spaces
+    let (input, id) = word_sequence(input)?;
+
     // the parser returns a list of every space and word so we have to join them back up
-    Ok((input, Citizen::Identifier(id.join(""))))
+    Ok((input, Citizen::Identifier(id.to_string())))
+}
+
+fn string(input: &str) -> IResult<&str, Citizen> {
+    // a string is a sequence of words in between two quotes
+    let (input, _) = quote(input)?;
+    let (input, _) = space(input)?;
+    let (input, value) = take_until(" quote")(input)?;
+    
+    // return the string we grabbed
+    Ok((input, Citizen::Str(value.to_string())))
 }
 
 fn citizen(input: &str) -> IResult<&str, Citizen> {
     alt((
-        identifier,
+        string,
         identifier
     ))(input)
 }
 
-fn argument_list(input: &str) -> IResult<&str, Vec<Citizen>> {
+fn command_binding(input: &str) -> IResult<&str, Vec<Citizen>> {
     // the list of arguments to a command are proceeded by a space and then many citizens
     // separated by the word "and"
-    let (input, (_, arguments)) = tuple((space, separated_list(space, citizen)))(input)?;
+    let (input, (_, arguments)) = tuple((space, separated_list(tag("&"), citizen)))(input)?;
 
     // return the list of arguments
     Ok((input, arguments))
@@ -68,7 +89,7 @@ fn argument_list(input: &str) -> IResult<&str, Vec<Citizen>> {
 
 fn parse_command(input: &str) -> IResult<&str, Command> {
     // look for the action and optionally a
-    let (input, (action, args)) = tuple((word, opt(argument_list)))(input)?;
+    let (input, (action, args)) = tuple((word, opt(command_binding)))(input)?;
 
     // return the command we just made
     Ok((input, Command {
