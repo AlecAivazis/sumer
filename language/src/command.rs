@@ -1,11 +1,11 @@
 // externals
 use nom::{
     IResult,
-    bytes::complete::{tag, take_while1, take_until},
-    combinator::{opt, map_res},
-    sequence::{tuple, delimited },
-    branch::{alt},
-    multi::{many1, separated_list},
+    bytes::complete::{ tag, take_while1, take_until },
+    combinator::{ opt },
+    sequence::{ tuple },
+    branch::{ alt },
+    multi::{ many1, separated_list },
 };
 
 /// A Citizen is anything that can be referenced
@@ -66,6 +66,8 @@ fn string(input: &str) -> IResult<&str, Citizen> {
     let (input, _) = quote(input)?;
     let (input, _) = space(input)?;
     let (input, value) = take_until(" quote")(input)?;
+    let (input, _) = space(input)?;
+    let (input, _) = quote(input)?;
     
     // return the string we grabbed
     Ok((input, Citizen::Str(value.to_string())))
@@ -111,8 +113,8 @@ pub fn parse(cmd: String) -> Result<Command, &'static str> {
     }
 
     match parse_command(&cmd) {
-        Ok((left, cmd)) => Ok(cmd),
-        Err(_) => Err("e")
+        Ok((_left_to_parse, cmd)) => Ok(cmd),
+        _ => Err("Encountered error while parsing command"),
     }
 }
 
