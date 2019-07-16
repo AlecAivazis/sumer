@@ -7,6 +7,7 @@ use nom::{
     branch::{ alt },
     multi::{ many1, separated_list },
 };
+use std::collections::*;
 
 /// A Citizen is anything that can be referenced
 #[derive(Debug, Clone)]
@@ -34,6 +35,16 @@ impl PartialEq for Citizen {
     }
 }
 
+type Parser = fn (input: &str) -> IResult<&str, &str>;
+
+/// Runtime is a singleton that interprets commands and tracks the current state of the program.
+pub struct Runtime<'a, RuntimeT> {
+    /// commands are a list of (parser, callback) pairs that are checked against when 
+    /// interpretting commands. A callback is a function that takes the runtime and any argument bindings
+    /// and returns an updated runtime
+    commands: Vec<(Parser, (&'a Fn(HashMap<&str, Citizen>, RuntimeT) -> RuntimeT))>
+} 
+
 
 fn space(input: &str) -> IResult<&str, &str> {
     take_while1(|c| c == ' ')(input)
@@ -48,16 +59,17 @@ fn quote(input: &str) -> IResult<&str, &str> {
 }
 
 fn word_sequence(input: &str) -> IResult<&str, String> {
+    // a squenece is a series of words and spaces
     let (input, id) = many1(alt((space, word)))(input)?;
 
     return Ok((input, id.join("")))
 }
 
 fn identifier(input: &str) -> IResult<&str, Citizen> {
-    // an identifier is a series of words and spaces
+    // an identifier is a word sequence
     let (input, id) = word_sequence(input)?;
 
-    // the parser returns a list of every space and word so we have to join them back up
+    // wrap the result in the right enum value
     Ok((input, Citizen::Identifier(id.to_string())))
 }
 
@@ -124,7 +136,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_empty_command() {
+    fn parse_empty_command_errs() {
         match super::parse("".to_string()) {
             // we got a command (no error)
             Ok(_) => assert!(false, "did not encounter an error"),
@@ -134,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_command_no_args() {
+    fn parse_run_command() {
         match super::parse("hello".to_string()) {
             // if we encountered an error the test failed
             Err(err) => assert!(false, err),
@@ -161,12 +173,12 @@ mod tests {
         ];
 
         for row in table {
-            match super::parse("hello ".to_string() + row.0) {
+            match super::parse("run ".to_string() + row.0) {
                 // if we encountered an error the test failed
                 Err(err) => assert!(false, err),
                 Ok(cmd) => {
                     // make sure we got a command with the right action
-                    assert_eq!(cmd.action, "hello");
+                    assert_eq!(cmd.action, "run");
                     // and there is only one argument
                     assert_eq!(cmd.arguments.len(), 1);
                     // and it is what we expected

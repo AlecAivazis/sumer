@@ -43,4 +43,14 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn execute_fn() {
+       // a scope for this action
+       let scope: Scope = HashMap::new();
+
+        // an action is something that takes the initial state and  
+        
+    }
+    
 }

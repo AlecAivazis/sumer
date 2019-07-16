@@ -34,3 +34,7 @@ The action is the core behavior of the command. These include:
 ### Wait commands
 
 "wait" pauses sumer to allow you to do other things with your life.
+
+### FUnction definition
+
+"Define add a and b with parameters a and b as a plus b"
