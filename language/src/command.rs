@@ -16,12 +16,6 @@ pub enum Citizen {
     Str(String),
 }
 
-#[derive(Debug)]
-pub struct Command {
-    pub action: String,
-    pub arguments: Vec<Citizen>,
-}
-
 impl PartialEq for Citizen {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -35,16 +29,28 @@ impl PartialEq for Citizen {
     }
 }
 
-type Parser = fn (input: &str) -> IResult<&str, &str>;
+
+/// Bindings are stored as a mapping from the spoken word (represented as a string) and
+/// the citizen that is bound to it.
+type Binding = HashMap<String, Citizen>;
+
+/// CommandParser is a function that takes a string and returns a binding mappings if 
+/// the string matches the command. 
+type CommandParser = fn (input: &str) -> IResult<Binding, &str>;
+
+/// Command is a 2-pair that consists of a parser to run and a function to invoke if the parser matches
+type Command<'a, T> = (CommandParser, (&'a Fn(Binding, T) -> T));
 
 /// Runtime is a singleton that interprets commands and tracks the current state of the program.
-pub struct Runtime<'a, RuntimeT> {
+pub struct Runtime<'a, InitialT> {
+    /// the state of the runtime
+    state: InitialT,
+    
     /// commands are a list of (parser, callback) pairs that are checked against when 
     /// interpretting commands. A callback is a function that takes the runtime and any argument bindings
     /// and returns an updated runtime
-    commands: Vec<(Parser, (&'a Fn(HashMap<&str, Citizen>, RuntimeT) -> RuntimeT))>
-} 
-
+    commands: Vec<Command<'a, InitialT>>,
+}
 
 fn space(input: &str) -> IResult<&str, &str> {
     take_while1(|c| c == ' ')(input)
@@ -92,99 +98,34 @@ fn citizen(input: &str) -> IResult<&str, Citizen> {
     ))(input)
 }
 
-fn command_binding(input: &str) -> IResult<&str, Vec<Citizen>> {
-    // the list of arguments to a command are proceeded by a space and then many citizens
-    // separated by the word "and"
-    let (input, (_, arguments)) = tuple((space, separated_list(tag("&"), citizen)))(input)?;
-
-    // return the list of arguments
-    Ok((input, arguments))
-}
-
-fn parse_command(input: &str) -> IResult<&str, Command> {
-    // look for the action and optionally a
-    let (input, (action, args)) = tuple((word, opt(command_binding)))(input)?;
-
-    // return the command we just made
-    Ok((input, Command {
-        action: action.to_string(),
-        arguments: match args {
-            None => vec![],
-            Some(args) => args,
-        },
-    }))
-}
-
-
-/// parse a string into the corresponding Command
-pub fn parse(cmd: String) -> Result<Command, &'static str> {
-    // if we weren't given a string
-    if cmd.len() == 0 {
-        // yell loudly
-        return Err("Encountered empty command");
-    }
-
-    match parse_command(&cmd) {
-        Ok((_left_to_parse, cmd)) => Ok(cmd),
-        _ => Err("Encountered error while parsing command"),
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn parse_empty_command_errs() {
-        match super::parse("".to_string()) {
-            // we got a command (no error)
-            Ok(_) => assert!(false, "did not encounter an error"),
-            // if we did encounter an error, the tests passed!
-            Err(_) => (),
-        };
-    }
-
-    #[test]
-    fn parse_run_command() {
-        match super::parse("hello".to_string()) {
-            // if we encountered an error the test failed
-            Err(err) => assert!(false, err),
-            Ok(cmd) => {
-                // make sure we got a command with the right action
-                assert_eq!(cmd.action, "hello");
-                // and there are no arguments
-                assert_eq!(cmd.arguments.len(), 0);
-            }
-        };
-    }
-
-    #[test]
-    fn parse_single_argument() {
+    fn citizen() {
+        // the list of citizens we can parse
         let table = vec![
-            (
-                "hello world",
-                Citizen::Identifier("hello world".to_string()),
-            ),
-            (
-                "quote hello world quote",
-                Citizen::Str("hello world".to_string()),
-            ),
+            ( "identifier", "hello", Citizen::Identifier("hello".to_string()) ),
+            ( "string", "quote hello world quote", Citizen::Str("hello world".to_string()) ),
         ];
 
-        for row in table {
-            match super::parse("run ".to_string() + row.0) {
-                // if we encountered an error the test failed
-                Err(err) => assert!(false, err),
-                Ok(cmd) => {
-                    // make sure we got a command with the right action
-                    assert_eq!(cmd.action, "run");
-                    // and there is only one argument
-                    assert_eq!(cmd.arguments.len(), 1);
-                    // and it is what we expected
-                    assert_eq!(cmd.arguments[0], row.1);
+        // the runtime
+        let runtime = Runtime{
+            state: "",
+            commands: vec![],
+        };
+
+        for ( title, input, expected ) in table {
+            // make sure we can parse the string value
+            match super::citizen(input) {
+                Err(err) => assert!(false, title),
+                Ok((_left_to_parse, res)) => {
+                    assert_eq!(expected, res)
                 }
-            };
+            }
         }
+
     }
 }
