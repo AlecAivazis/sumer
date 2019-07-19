@@ -42,14 +42,14 @@ type CommandParser = fn (input: &str) -> IResult<Binding, &str>;
 type Command<'a, T> = (CommandParser, (&'a Fn(Binding, T) -> T));
 
 /// Runtime is a singleton that interprets commands and tracks the current state of the program.
-pub struct Runtime<'a, InitialT> {
+pub struct Runtime<'a, StateT> {
     /// the state of the runtime
-    state: InitialT,
+    state: StateT,
     
     /// commands are a list of (parser, callback) pairs that are checked against when 
     /// interpretting commands. A callback is a function that takes the runtime and any argument bindings
     /// and returns an updated runtime
-    commands: Vec<Command<'a, InitialT>>,
+    commands: Vec<Command<'a, StateT>>,
 }
 
 fn space(input: &str) -> IResult<&str, &str> {
