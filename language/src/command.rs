@@ -2,12 +2,11 @@
 use nom::{
     IResult,
     bytes::complete::{ tag, take_while1, take_until },
-    combinator::{ opt },
-    sequence::{ tuple },
     branch::{ alt },
-    multi::{ many1, separated_list },
+    multi::{ many1 },
 };
 use std::collections::*;
+
 
 /// A Citizen is anything that can be referenced
 #[derive(Debug, Clone)]
@@ -34,22 +33,47 @@ impl PartialEq for Citizen {
 /// the citizen that is bound to it.
 type Binding = HashMap<String, Citizen>;
 
-/// CommandParser is a function that takes a string and returns a binding mappings if 
-/// the string matches the command. 
-type CommandParser = fn (input: &str) -> IResult<Binding, &str>;
+/// CommandParser is a function that takes a string and if the string matches the command it
+/// returns a mapping of parameter values.
+type CommandParser = fn (input: &str) -> IResult<&str, Binding>;
 
 /// Command is a 2-pair that consists of a parser to run and a function to invoke if the parser matches
-type Command<'a, T> = (CommandParser, (&'a Fn(Binding, T) -> T));
+type Command<'a, T> = (CommandParser, (&'a Fn(Binding, &T) -> Result<T, String>));
 
 /// Runtime is a singleton that interprets commands and tracks the current state of the program.
 pub struct Runtime<'a, StateT> {
     /// the state of the runtime
-    state: StateT,
-    
-    /// commands are a list of (parser, callback) pairs that are checked against when 
-    /// interpretting commands. A callback is a function that takes the runtime and any argument bindings
-    /// and returns an updated runtime
+    pub state: StateT,
+
+    /// commands are a list of (parser, callback) pairs that are checked against when
+    /// interpreting words spoken by the user.
     commands: Vec<Command<'a, StateT>>,
+}
+
+impl <'a, StateT> Runtime<'a, StateT> {
+    // execute a spoken command in this runtime
+    fn exec(&mut self, command: String) {
+        // for each possible parser/callback combo
+        for (parser, callback) in &self.commands {
+            // attempt to parse the command
+            match parser(&command) {
+                // if there was an error, skip it
+                Err(_) => (),
+                // if we found a match
+                Ok((_, bindings)) => {
+                    // update the internal state
+                    match callback(bindings, &self.state) {
+                        Ok(new_state) => self.state = new_state,
+                        Err(_) => ()
+                    };
+
+                    // stop looking for commands
+                    break;
+                }
+            }
+        }
+
+    }
 }
 
 fn space(input: &str) -> IResult<&str, &str> {
@@ -86,7 +110,7 @@ fn string(input: &str) -> IResult<&str, Citizen> {
     let (input, value) = take_until(" quote")(input)?;
     let (input, _) = space(input)?;
     let (input, _) = quote(input)?;
-    
+
     // return the string we grabbed
     Ok((input, Citizen::Str(value.to_string())))
 }
@@ -101,6 +125,24 @@ fn citizen(input: &str) -> IResult<&str, Citizen> {
 
 #[cfg(test)]
 mod tests {
+    // define a macro to quickly make maps
+    macro_rules! hashmap {
+        (@single $($x:tt)*) => (());
+        (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
+
+        ($($key:expr => $value:expr,)+) => { hashmap!($($key => $value),+) };
+        ($($key:expr => $value:expr),*) => {
+            {
+                let _cap = hashmap!(@count $($key),*);
+                let mut _map = ::std::collections::HashMap::with_capacity(_cap);
+                $(
+                    let _ = _map.insert($key, $value);
+                )*
+                _map
+            }
+        };
+    }
+
     use super::*;
 
     #[test]
@@ -111,21 +153,47 @@ mod tests {
             ( "string", "quote hello world quote", Citizen::Str("hello world".to_string()) ),
         ];
 
-        // the runtime
-        let runtime = Runtime{
-            state: "",
-            commands: vec![],
-        };
-
         for ( title, input, expected ) in table {
             // make sure we can parse the string value
             match super::citizen(input) {
-                Err(err) => assert!(false, title),
-                Ok((_left_to_parse, res)) => {
-                    assert_eq!(expected, res)
+                Err(_err) => assert!(false, title),
+                Ok((left_to_parse, res)) => {
+                    assert_eq!(left_to_parse, "");
+                    assert_eq!(expected, res);
                 }
             }
         }
 
+    }
+
+    #[test]
+    fn runtime_command() {
+        // the parser to run
+        fn test_command(input: &str) -> IResult<&str, Binding> {
+            // a string is a sequence of words in between two quotes
+            let (input, _) = tag("add")(input)?;
+
+            // we only have one binding (the argument)
+            Ok((input, hashmap!{  }))
+        }
+
+        // the function to call if the command matches
+        fn callback(_args: Binding, initial: &String) -> Result<String, String> {
+            Ok(format!("{} world", initial).to_string())
+        }
+
+        // create a runtime with a parse for "hello <argument>"
+        let mut runtime = Runtime{
+            state: "hello".to_string(),
+            commands: vec![
+                (test_command, &callback)
+            ]
+        };
+
+        // execute the command
+        runtime.exec("add".to_string());
+
+        // make sure that we updated the state
+        assert_eq!(runtime.state, "hello world".to_string());
     }
 }
