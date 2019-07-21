@@ -2,23 +2,17 @@
 use nom::{
     IResult,
     bytes::complete::{ tag, take_while1, take_until },
-    combinator::{ opt },
-    sequence::{ tuple },
     branch::{ alt },
-    multi::{ many1, separated_list },
+    multi::{ many1 },
 };
+use std::collections::*;
+
 
 /// A Citizen is anything that can be referenced
 #[derive(Debug, Clone)]
 pub enum Citizen {
     Identifier(String),
     Str(String),
-}
-
-#[derive(Debug)]
-pub struct Command {
-    pub action: String,
-    pub arguments: Vec<Citizen>,
 }
 
 impl PartialEq for Citizen {
@@ -35,6 +29,53 @@ impl PartialEq for Citizen {
 }
 
 
+/// Bindings are stored as a mapping from the spoken word (represented as a string) and
+/// the citizen that is bound to it.
+type Binding = HashMap<String, Citizen>;
+
+/// CommandParser is a function that takes a string and if the string matches the command it
+/// returns a mapping of parameter values.
+type CommandParser = fn (input: &str) -> IResult<&str, Binding>;
+
+/// Command is a 2-pair that consists of a parser to run and a function to invoke if the parser matches
+type Command<'a, T> = (CommandParser, (&'a Fn(Binding, &T) -> Result<T, String>));
+
+/// Runtime is a singleton that interprets commands and tracks the current state of the program.
+pub struct Runtime<'a, StateT> {
+    /// the state of the runtime
+    pub state: StateT,
+
+    /// commands are a list of (parser, callback) pairs that are checked against when
+    /// interpreting words spoken by the user.
+    commands: Vec<Command<'a, StateT>>,
+}
+
+impl <'a, StateT> Runtime<'a, StateT> {
+    // execute a spoken command in this runtime
+    fn exec(&mut self, command: String) {
+        // for each possible parser/callback combo
+        for (parser, callback) in &self.commands {
+            // attempt to parse the command
+            match parser(&command) {
+                // if there was an error, skip it
+                Err(_) => (),
+                // if we found a match
+                Ok((_, bindings)) => {
+                    // update the internal state
+                    match callback(bindings, &self.state) {
+                        Ok(new_state) => self.state = new_state,
+                        Err(_) => ()
+                    };
+
+                    // stop looking for commands
+                    break;
+                }
+            }
+        }
+
+    }
+}
+
 fn space(input: &str) -> IResult<&str, &str> {
     take_while1(|c| c == ' ')(input)
 }
@@ -48,16 +89,17 @@ fn quote(input: &str) -> IResult<&str, &str> {
 }
 
 fn word_sequence(input: &str) -> IResult<&str, String> {
+    // a squenece is a series of words and spaces
     let (input, id) = many1(alt((space, word)))(input)?;
 
     return Ok((input, id.join("")))
 }
 
 fn identifier(input: &str) -> IResult<&str, Citizen> {
-    // an identifier is a series of words and spaces
+    // an identifier is a word sequence
     let (input, id) = word_sequence(input)?;
 
-    // the parser returns a list of every space and word so we have to join them back up
+    // wrap the result in the right enum value
     Ok((input, Citizen::Identifier(id.to_string())))
 }
 
@@ -68,7 +110,7 @@ fn string(input: &str) -> IResult<&str, Citizen> {
     let (input, value) = take_until(" quote")(input)?;
     let (input, _) = space(input)?;
     let (input, _) = quote(input)?;
-    
+
     // return the string we grabbed
     Ok((input, Citizen::Str(value.to_string())))
 }
@@ -80,99 +122,78 @@ fn citizen(input: &str) -> IResult<&str, Citizen> {
     ))(input)
 }
 
-fn command_binding(input: &str) -> IResult<&str, Vec<Citizen>> {
-    // the list of arguments to a command are proceeded by a space and then many citizens
-    // separated by the word "and"
-    let (input, (_, arguments)) = tuple((space, separated_list(tag("&"), citizen)))(input)?;
-
-    // return the list of arguments
-    Ok((input, arguments))
-}
-
-fn parse_command(input: &str) -> IResult<&str, Command> {
-    // look for the action and optionally a
-    let (input, (action, args)) = tuple((word, opt(command_binding)))(input)?;
-
-    // return the command we just made
-    Ok((input, Command {
-        action: action.to_string(),
-        arguments: match args {
-            None => vec![],
-            Some(args) => args,
-        },
-    }))
-}
-
-
-/// parse a string into the corresponding Command
-pub fn parse(cmd: String) -> Result<Command, &'static str> {
-    // if we weren't given a string
-    if cmd.len() == 0 {
-        // yell loudly
-        return Err("Encountered empty command");
-    }
-
-    match parse_command(&cmd) {
-        Ok((_left_to_parse, cmd)) => Ok(cmd),
-        _ => Err("Encountered error while parsing command"),
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // define a macro to quickly make maps
+    macro_rules! hashmap {
+        (@single $($x:tt)*) => (());
+        (@count $($rest:expr),*) => (<[()]>::len(&[$(hashmap!(@single $rest)),*]));
 
-    #[test]
-    fn parse_empty_command() {
-        match super::parse("".to_string()) {
-            // we got a command (no error)
-            Ok(_) => assert!(false, "did not encounter an error"),
-            // if we did encounter an error, the tests passed!
-            Err(_) => (),
-        };
-    }
-
-    #[test]
-    fn parse_command_no_args() {
-        match super::parse("hello".to_string()) {
-            // if we encountered an error the test failed
-            Err(err) => assert!(false, err),
-            Ok(cmd) => {
-                // make sure we got a command with the right action
-                assert_eq!(cmd.action, "hello");
-                // and there are no arguments
-                assert_eq!(cmd.arguments.len(), 0);
+        ($($key:expr => $value:expr,)+) => { hashmap!($($key => $value),+) };
+        ($($key:expr => $value:expr),*) => {
+            {
+                let _cap = hashmap!(@count $($key),*);
+                let mut _map = ::std::collections::HashMap::with_capacity(_cap);
+                $(
+                    let _ = _map.insert($key, $value);
+                )*
+                _map
             }
         };
     }
 
+    use super::*;
+
     #[test]
-    fn parse_single_argument() {
+    fn citizen() {
+        // the list of citizens we can parse
         let table = vec![
-            (
-                "hello world",
-                Citizen::Identifier("hello world".to_string()),
-            ),
-            (
-                "quote hello world quote",
-                Citizen::Str("hello world".to_string()),
-            ),
+            ( "identifier", "hello", Citizen::Identifier("hello".to_string()) ),
+            ( "string", "quote hello world quote", Citizen::Str("hello world".to_string()) ),
         ];
 
-        for row in table {
-            match super::parse("hello ".to_string() + row.0) {
-                // if we encountered an error the test failed
-                Err(err) => assert!(false, err),
-                Ok(cmd) => {
-                    // make sure we got a command with the right action
-                    assert_eq!(cmd.action, "hello");
-                    // and there is only one argument
-                    assert_eq!(cmd.arguments.len(), 1);
-                    // and it is what we expected
-                    assert_eq!(cmd.arguments[0], row.1);
+        for ( title, input, expected ) in table {
+            // make sure we can parse the string value
+            match super::citizen(input) {
+                Err(_err) => assert!(false, title),
+                Ok((left_to_parse, res)) => {
+                    assert_eq!(left_to_parse, "");
+                    assert_eq!(expected, res);
                 }
-            };
+            }
         }
+
+    }
+
+    #[test]
+    fn runtime_command() {
+        // the parser to run
+        fn test_command(input: &str) -> IResult<&str, Binding> {
+            // a string is a sequence of words in between two quotes
+            let (input, _) = tag("add")(input)?;
+
+            // we only have one binding (the argument)
+            Ok((input, hashmap!{  }))
+        }
+
+        // the function to call if the command matches
+        fn callback(_args: Binding, initial: &String) -> Result<String, String> {
+            Ok(format!("{} world", initial).to_string())
+        }
+
+        // create a runtime with a parse for "hello <argument>"
+        let mut runtime = Runtime{
+            state: "hello".to_string(),
+            commands: vec![
+                (test_command, &callback)
+            ]
+        };
+
+        // execute the command
+        runtime.exec("add".to_string());
+
+        // make sure that we updated the state
+        assert_eq!(runtime.state, "hello world".to_string());
     }
 }
