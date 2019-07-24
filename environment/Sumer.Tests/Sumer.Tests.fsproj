@@ -19,10 +19,10 @@
 
   <ItemGroup>
       <Reference Include="Assembly-CSharp">
-        <HintPath>..\lib\Assembly-CSharp.dll</HintPath>
+        <HintPath>..\..\lib\Assembly-CSharp.dll</HintPath>
       </Reference>
       <Reference Include="Sumer">
-        <HintPath>..\Sumer\obj\Debug\netstandard2.0\sumer.dll</HintPath>
+        <HintPath>..\Sumer\obj\Debug\netstandard2.0\Sumer.dll</HintPath>
       </Reference>
       <Reference Include="Unity.Cecil.Mdb">
         <HintPath>..\lib\Unity.Cecil.Mdb.dll</HintPath>
