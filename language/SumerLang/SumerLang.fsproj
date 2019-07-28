@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src/Library.fs" />
+    <Compile Include="src/Parser.fs" />
   </ItemGroup>
 
 </Project>
