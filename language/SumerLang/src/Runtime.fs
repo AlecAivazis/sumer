@@ -1,4 +1,4 @@
-namespace SumerLang.Parser
+namespace SumerLang.Runtime
 
 /// Input is the input type for all sumer parsers
 type InputStream = string
@@ -21,4 +21,7 @@ type Runtime<'StateT>(initialState: 'StateT, initialCmds: List<Command<'StateT>>
     // as well as the list of commands
     member this.Commands = initialCmds
 
-
+    /// Execute takes an InputStream and might update its internal state if there is 
+    /// a matching command
+    member this.Execute (command: InputStream): Result<unit, string> =
+        Ok(())

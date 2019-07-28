@@ -1,10 +1,10 @@
 namespace SumerLang.Tests
 
 open NUnit.Framework
-open SumerLang.Parser
+open SumerLang.Runtime
 
 [<TestFixture>]
-type GeometryTests () =
+type RuntimeTests () =
     [<Test>]
     member this.ExecuteParser() =
         ()
