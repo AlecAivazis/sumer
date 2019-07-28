@@ -14,11 +14,11 @@ type CommandParser = (InputStream) -> Result<Map<string, Citizen>, string>
 type 'ResultT Command = Command of 'ResultT * int
 
 /// Runtime<StateT> is responsible for handing incoming strings, checking them against
-/// the list of known commands and executing the commands and its internal state.
-type 'StateT Runtime = {
-    /// The internal state of the runtime
-    State: 'StateT;
-    /// The top level list of commands that the user can perform on the environment
-    Commands: List<Command<'StateT>>;
-}
+/// the list of known commands and executing the commands against its internal state.
+type Runtime<'StateT>(initialState: 'StateT, initialCmds: List<Command<'StateT>>) = 
+    // make the state available
+    member this.State = initialState
+    // as well as the list of commands
+    member this.Commands = initialCmds
+
 
