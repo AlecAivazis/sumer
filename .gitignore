@@ -2,9 +2,9 @@
 
 sumer.code-workspace
 
-# language (rust)
-
-language/target/*
+# language
+*/*/bin/
+*/*/obj/
 
 
 

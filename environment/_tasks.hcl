@@ -12,6 +12,6 @@ task "tests" {
     description = "Run the tests associated with this project"
     pipeline = [
         "run build",
-        "dotnet test SumerTests"
+        "dotnet test Sumer.Tests"
     ]
 }
