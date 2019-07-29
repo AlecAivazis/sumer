@@ -16,7 +16,7 @@ type OperationBinding = Map<string, Citizen>
 
 type ParsingError = string
 /// CommandParser might turn an input stream into a mapping of bindings
-type CommandParser = (InputStream) -> Result<OperationBinding, ParsingError>
+type CommandParser = (InputStream) -> Option<Result<OperationBinding, ParsingError>>
     
 /// Command<'ResultT> associates a parser with an operation to perform if there's a match
 type 'ResultT Command = Command of CommandParser * Operation<'ResultT>
@@ -29,16 +29,32 @@ and 'T Operation =
 
 /// Runtime<StateT> handles incoming strings, checking them against the list of known commands 
 /// and executing the commands against its internal state.
-type Runtime<'StateT>(initialState: 'StateT, initialCommands: List<Command<'StateT>>) = 
+type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Command<'StateT>>) = 
     // make the state available
-    member this.State = initialState
+    member val State = state with get, set 
     // as well as the list of commands
-    member this.Commands = initialCommands
+    member val Commands = commands with get, set 
 
     /// Execute takes an InputStream and might update its internal state if there is 
     /// a matching command
-    member this.Execute (command: InputStream): Result<Runtime<'StateT>, string> =
+    member this.Execute (command: InputStream): Result<unit, string> =
+        // only look at the first command of the ones that match
+        let matches = this.Commands |> 
+                            List.choose (fun (Command (parser, operation)) -> 
+                                match parser command with
+                                | None -> None
+                                | Some(Error(_)) -> None
+                                | Some(Ok(binding)) -> Some (binding, operation)
+                            ) 
 
-
-        // nothing went wrong, nothing was updated
-        Ok(this)
+        // the result of the execution depends on the commands that were matched
+        match matches with 
+        // if there were no matches
+        | [] -> Ok(())
+        // otherwise grab the first one
+        | (binding, operation)::_ -> 
+            match operation with
+            // if all we have to do is update the state
+            | NewState state -> 
+                // nothing went wrong
+                Ok(this.State <- state)                
