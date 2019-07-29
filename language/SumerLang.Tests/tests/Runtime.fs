@@ -28,3 +28,17 @@ type RuntimeTests () =
         | Ok(_) -> 
             // we should have updated the internal state of runtime
             runtime.State |> should equal "updated!!!"
+    
+    [<Test>]
+    member this.ExecuteParser_noCommand() =
+        // create a runtime to test against
+        let runtime = Runtime(
+                            state = "",
+                            commands = []
+                        )
+        // execute a command
+        match InputStream.FromString "this could be anything" |> runtime.Execute with 
+        // if we encountered an error then the test passed
+        | Error(_) -> ()
+        // if it succeeded 
+        | Ok(_) -> should equal false true

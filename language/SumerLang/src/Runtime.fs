@@ -26,7 +26,6 @@ and 'T Operation =
     /// An operation that instructs the runtime to change its state to a specific value
     | NewState of 'T
 
-
 /// Runtime<StateT> handles incoming strings, checking them against the list of known commands 
 /// and executing the commands against its internal state.
 type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Command<'StateT>>) = 
@@ -50,11 +49,11 @@ type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Co
         // the result of the execution depends on the commands that were matched
         match matches with 
         // if there were no matches
-        | [] -> Ok(())
-        // otherwise grab the first one
+        | [] -> Error("Did not understand command " + command.ToString())
+        // otherwise grab the bindings and operation of the first match
         | (binding, operation)::_ -> 
             match operation with
             // if all we have to do is update the state
             | NewState state -> 
-                // nothing went wrong
+                // nothing can go wrong
                 Ok(this.State <- state)                
