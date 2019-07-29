@@ -57,3 +57,8 @@ type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Co
             | UpdateState state -> 
                 // nothing can go wrong
                 Ok(this.State <- state)                
+
+module Runtime =
+
+    // the BlackHoleParser always passes and never returns any bindings
+    let BlackHoleParser = fun (input: InputStream) -> Some(Ok(Map.empty))

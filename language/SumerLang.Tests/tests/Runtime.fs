@@ -9,15 +9,11 @@ open FsUnit
 type RuntimeTests () =
     [<Test>]
     member this.ExecuteParser_newState() =
-        // we need to test a command that just sets the state
-        let updateParser = fun (input: InputStream) -> Some(Ok(Map.empty))
-        // we do want an operation that sets the new state
-        let updateOperation = UpdateState "updated!!!"
-
         // create a runtime to test against
         let runtime = Runtime(
                             state = "",
-                            commands = [Command(updateParser, updateOperation)]
+                            // we want a command that will always run and updates the state to a known value
+                            commands = [Command(Runtime.BlackHoleParser, UpdateState "updated!!!")]
                         )
 
         // execute a command
