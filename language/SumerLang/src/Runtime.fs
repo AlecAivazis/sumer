@@ -17,14 +17,14 @@ type OperationBinding = Map<string, Citizen>
 type ParsingError = string
 /// CommandParser might turn an input stream into a mapping of bindings
 type CommandParser = (InputStream) -> Option<Result<OperationBinding, ParsingError>>
+
+/// Operation<'T> is the description of a mutation on an object of type 'T
+type 'T Operation = 
+    /// An operation that instructs the runtime to change its state to a specific value
+    | UpdateState of 'T
     
 /// Command<'ResultT> associates a parser with an operation to perform if there's a match
 type 'ResultT Command = Command of CommandParser * Operation<'ResultT>
-
-/// Operation<'T> is the description of a mutation on an object of type 'T
-and 'T Operation = 
-    /// An operation that instructs the runtime to change its state to a specific value
-    | NewState of 'T
 
 /// Runtime<StateT> handles incoming strings, checking them against the list of known commands 
 /// and executing the commands against its internal state.
@@ -54,6 +54,6 @@ type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Co
         | (binding, operation)::_ -> 
             match operation with
             // if all we have to do is update the state
-            | NewState state -> 
+            | UpdateState state -> 
                 // nothing can go wrong
                 Ok(this.State <- state)                

@@ -12,7 +12,7 @@ type RuntimeTests () =
         // we need to test a command that just sets the state
         let updateParser = fun (input: InputStream) -> Some(Ok(Map.empty))
         // we do want an operation that sets the new state
-        let updateOperation = NewState "updated!!!"
+        let updateOperation = UpdateState "updated!!!"
 
         // create a runtime to test against
         let runtime = Runtime(
