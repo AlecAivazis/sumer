@@ -8,7 +8,7 @@ open FsUnit
 [<TestFixture>]
 type RuntimeTests () =
     [<Test>]
-    member this.ExecuteParser_newState() =
+    member this.ExecuteParser_updateState() =
         // create a runtime to test against
         let runtime = Runtime(
                             state = "",
