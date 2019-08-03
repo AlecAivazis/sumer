@@ -11,20 +11,20 @@ type InputStream =
 type Citizen = 
     | String of string 
 
-/// OperationBinding is a mapping from binding variable to a citizen to be used in an operation
-type OperationBinding = Map<string, Citizen>
+/// MutationBinding is a mapping from binding variable to a citizen to be used in an Mutation
+type MutationBinding = Map<string, Citizen>
 
 type ParsingError = string
 /// CommandParser might turn an input stream into a mapping of bindings
-type CommandParser = (InputStream) -> Option<Result<OperationBinding, ParsingError>>
+type CommandParser = (InputStream) -> Option<Result<MutationBinding, ParsingError>>
 
-/// Operation<'T> is the description of a mutation on an object of type 'T
-type 'T Operation = 
-    /// An operation that instructs the runtime to change its state to a specific value
+/// Mutation<'T> is the description of a mutation on an object of type 'T
+type 'T Mutation = 
+    /// An Mutation that instructs the runtime to change its state to a specific value
     | UpdateState of 'T
     
-/// Command<'ResultT> associates a parser with an operation to perform if there's a match
-type 'ResultT Command = Command of CommandParser * Operation<'ResultT>
+/// Command<'ResultT> associates a parser with an Mutation to perform if there's a match
+type 'ResultT Command = Command of CommandParser * Mutation<'ResultT>
 
 /// Runtime<StateT> handles incoming strings, checking them against the list of known commands 
 /// and executing the commands against its internal state.
@@ -39,20 +39,20 @@ type Runtime<'StateT when 'StateT : equality> (state: 'StateT, commands: List<Co
     member this.Execute (command: InputStream): Result<unit, string> =
         // only look at the first command of the ones that match
         let matches = this.Commands |> 
-                            List.choose (fun (Command (parser, operation)) -> 
+                            List.choose (fun (Command (parser, mutation)) -> 
                                 match parser command with
                                 | None -> None
                                 | Some(Error(_)) -> None
-                                | Some(Ok(binding)) -> Some (binding, operation)
+                                | Some(Ok(binding)) -> Some (binding, mutation)
                             ) 
 
         // the result of the execution depends on the commands that were matched
         match matches with 
         // if there were no matches
         | [] -> Error("Did not understand command " + command.ToString())
-        // otherwise grab the bindings and operation of the first match
-        | (binding, operation)::_ -> 
-            match operation with
+        // otherwise grab the bindings and Mutation of the first match
+        | (binding, mutation)::_ -> 
+            match mutation with
             // if all we have to do is update the state
             | UpdateState state -> 
                 // nothing can go wrong
